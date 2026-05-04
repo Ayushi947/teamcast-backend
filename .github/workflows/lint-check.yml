@@ -1,0 +1,146 @@
+name: Lint Check
+
+on:
+  pull_request:
+    branches: [main, dev, qa]
+    paths:
+      - '**/*.ts'
+      - '**/*.js'
+      - '**/*.json'
+      - 'package*.json'
+      - '.eslintrc*'
+      - '.prettierrc*'
+      - 'tsconfig*.json'
+  push:
+    branches: [main, dev]
+
+jobs:
+  lint-and-format-check:
+    name: Lint and Format Check
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ensure eslint is installed
+        run: |
+          if [ ! -f node_modules/.bin/eslint ]; then
+            echo "eslint not found, installing..."
+            npm install --save-dev eslint
+          fi
+
+      - name: Check TypeScript compilation
+        run: |
+          echo "🔍 Checking TypeScript compilation..."
+          npm run build
+          echo "✅ TypeScript compilation successful"
+
+      - name: Run ESLint
+        run: |
+          echo "🔍 Running ESLint..."
+          npx eslint . --ext .ts,.js
+          echo "✅ ESLint checks passed"
+
+      - name: Check Prettier formatting
+        run: |
+          echo "🔍 Checking Prettier formatting..."
+          npx prettier --check "src/**/*.ts" "*.{js,json,md}"
+          echo "✅ Prettier formatting is correct"
+
+      - name: Check for lint issues in changed files only
+        if: github.event_name == 'pull_request'
+        run: |
+          echo "🔍 Checking lint issues in changed files..."
+          CHANGED_FILES=$(git diff --name-only --diff-filter=ACMR origin/${{ github.base_ref }}...HEAD | grep -E '\.(ts|js)$' || echo "")
+          if [ -n "$CHANGED_FILES" ]; then
+            echo "Changed files to check:"
+            echo "$CHANGED_FILES"
+            echo "$CHANGED_FILES" | xargs npx eslint --ext .ts,.js
+            echo "✅ Changed files lint check passed"
+          else
+            echo "No TypeScript/JavaScript files changed"
+          fi
+
+      - name: Generate lint report
+        if: always()
+        run: |
+          echo "📊 Generating lint report..."
+          mkdir -p lint-reports
+          npx eslint . --ext .ts,.js --format json --output-file lint-reports/eslint-report.json || true
+          npx eslint . --ext .ts,.js --format html --output-file lint-reports/eslint-report.html || true
+          LINT_ERRORS=$(npx eslint . --ext .ts,.js --format json | jq -r '.[].errorCount' | awk '{sum += $1} END {print sum+0}' || echo "0")
+          LINT_WARNINGS=$(npx eslint . --ext .ts,.js --format json | jq -r '.[].warningCount' | awk '{sum += $1} END {print sum+0}' || echo "0")
+          echo "Lint Errors: $LINT_ERRORS"
+          echo "Lint Warnings: $LINT_WARNINGS"
+          echo "lint-errors=$LINT_ERRORS" >> $GITHUB_ENV
+          echo "lint-warnings=$LINT_WARNINGS" >> $GITHUB_ENV
+
+      - name: Upload lint reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lint-reports
+          path: lint-reports/
+          retention-days: 7
+
+  type-check:
+    name: TypeScript Type Check
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run TypeScript type check
+        run: |
+          echo "🔍 Running TypeScript type check..."
+          npx tsc --noEmit --project tsconfig.json
+          echo "✅ TypeScript type check passed"
+
+      - name: Check for unused exports (optional)
+        run: |
+          echo "🔍 Checking for unused exports..."
+          npx ts-unused-exports tsconfig.json --showLineNumber || echo "⚠️ Some unused exports found (not blocking)"
+
+  lint-status-check:
+    name: Lint Status Check
+    runs-on: self-hosted
+    needs: [lint-and-format-check, type-check]
+    if: always()
+
+    steps:
+      - name: Check lint results
+        run: |
+          echo "Checking overall lint status..."
+          LINT_STATUS="${{ needs.lint-and-format-check.result }}"
+          TYPE_STATUS="${{ needs.type-check.result }}"
+
+          echo "Lint Check: $LINT_STATUS"
+          echo "Type Check: $TYPE_STATUS"
+          if [ "$LINT_STATUS" != "success" ] || [ "$TYPE_STATUS" != "success" ]; then
+            echo "❌ Lint checks failed! PR cannot be merged."
+            exit 1
+          else
+            echo "✅ All lint checks passed! PR is ready for review."
+          fi
