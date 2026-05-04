@@ -1,0 +1,18 @@
+node_modules
+.env*
+dist*
+build*
+logs/
+*.log
+coverage/
+prisma/dev.db
+DEVOPS.txt
+scratchpad.txt
+# Kubernetes secrets
+k8s/overlays/*/secret.yaml
+k8s/overlays/*/secrets.yaml
+k8s/overlays/*/secret-*.yaml
+!k8s/overlays/*/secret-example.yaml
+teamcast-cicd-key.json
+uploads/
+prisma/**/migrations/**
