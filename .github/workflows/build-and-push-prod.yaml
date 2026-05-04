@@ -1,0 +1,46 @@
+name: Build-Push Docker Image for Teamcast backend prod
+
+on:
+  push:
+    tags:
+      - 'v1.0.*'
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  AR_HOSTNAME: us-central1-docker.pkg.dev
+  AR_REPOSITORY: teamcast-backend
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Google Auth
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+        token_format: 'access_token'
+        create_credentials_file: true
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+
+    - name: Configure Docker
+      run: gcloud auth configure-docker ${{ env.AR_HOSTNAME }}
+
+    - name: Build and Push Docker Image
+      uses: docker/build-push-action@v5
+      with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: us-central1-docker.pkg.dev/teamcast-prod/teamcast-prod/backend:v1.0.${{ github.run_number }} 
+          no-cache: true          
