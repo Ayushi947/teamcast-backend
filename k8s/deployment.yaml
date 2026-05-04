@@ -1,0 +1,226 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: teamcast-backend
+  namespace: teamcast
+  labels:
+    app: teamcast-backend
+    version: v1
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: teamcast-backend
+  template:
+    metadata:
+      labels:
+        app: teamcast-backend
+        version: v1
+    spec:
+      serviceAccountName: teamcast-backend # This enables workload identity
+      containers:
+        - name: teamcast-backend
+          image: us-central1-docker.pkg.dev/teamcastai/teamcast/backend:latest
+          ports:
+            - containerPort: 4300
+              name: http
+          env:
+            # Database configuration
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: database-url
+            - name: NODE_ENV
+              value: 'production'
+            - name: PORT
+              value: '4300'
+
+            # JWT configuration
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: jwt-secret
+            - name: REFRESH_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: refresh-token-secret
+            - name: JWT_EXPIRY
+              value: '1h'
+            - name: REFRESH_TOKEN_EXPIRY
+              value: '7d'
+
+            # App configuration
+            - name: FRONTEND_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: frontend-url
+            - name: SERVER_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: server-url
+            - name: APP_NAME
+              value: 'Teamcast'
+            - name: ENV_NAME
+              value: 'production'
+
+            # Google Cloud configuration - NO CREDENTIALS NEEDED WITH WORKLOAD IDENTITY
+            - name: GOOGLE_CLOUD_PROJECT_ID
+              value: 'teamcastai'
+            - name: GOOGLE_CLOUD_VERTEX_AI_LOCATION
+              value: 'us-central1'
+            - name: GOOGLE_CLOUD_VERTEX_AI_MODEL
+              value: 'gemini-pro'
+            - name: GOOGLE_CLOUD_VERTEX_AI_EMBEDDING_MODEL_ID
+              value: 'text-embedding-005'
+
+            # Storage configuration
+            - name: STORAGE_PROVIDER
+              value: 'gcp'
+            - name: BUCKET_NAME
+              value: 'teamcast'
+            - name: PRE_SIGNED_URL_EXPIRY_SECONDS
+              value: '3600'
+
+            # AI provider configuration
+            - name: RESUME_PARSER_PROVIDER
+              value: 'gcp-vertex'
+            - name: RESUME_ASSESSMENT_PROVIDER
+              value: 'gcp-vertex'
+            - name: JOB_PARSER_PROVIDER
+              value: 'gcp-vertex'
+            - name: ONBOARDING_ASSESSMENT_PROVIDER
+              value: 'gcp-vertex'
+            - name: AI_JOB_AI_ASSESSMENT_PROVIDER
+              value: 'gcp-vertex'
+            - name: RAG_PROVIDER
+              value: 'gcp-vertex'
+
+            # Redis configuration
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: redis-host
+            - name: REDIS_PORT
+              value: '6379'
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: redis-password
+                  optional: true
+            - name: USE_REDIS_CACHE
+              value: 'true'
+
+            # Notification configuration
+            - name: SEND_NOTIFICATIONS
+              value: 'true'
+            - name: NOTIFICATION_PROVIDER
+              value: 'brevo'
+            - name: BREVO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: brevo-api-key
+            - name: BREVO_FROM_EMAIL
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: brevo-from-email
+            - name: BREVO_FROM_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: brevo-from-name
+
+            # OAuth configuration
+            - name: GOOGLE_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: google-oauth-client-id
+            - name: GOOGLE_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: google-oauth-client-secret
+            - name: GITHUB_OAUTH_CLIENT_ID
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: github-oauth-client-id
+            - name: GITHUB_OAUTH_CLIENT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: github-oauth-client-secret
+            - name: OAUTH_REDIRECT_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: teamcast-config
+                  key: oauth-redirect-url
+            - name: OAUTH_STATE_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: oauth-state-secret
+
+            # Stream Chat configuration
+            - name: STREAM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: stream-api-key
+            - name: STREAM_API_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: stream-api-secret
+
+            # Cron configuration
+            - name: CRON_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: cron-api-key
+
+          resources:
+            requests:
+              memory: '512Mi'
+              cpu: '250m'
+            limits:
+              memory: '1Gi'
+              cpu: '1000m'
+
+          livenessProbe:
+            httpGet:
+              path: /api/monitoring/health
+              port: 4300
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+
+          readinessProbe:
+            httpGet:
+              path: /api/monitoring/health
+              port: 4300
+            initialDelaySeconds: 10
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 2
+
+      # Security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      # Image pull secrets if using private registry
+      imagePullSecrets:
+        - name: gcp-registry-secret

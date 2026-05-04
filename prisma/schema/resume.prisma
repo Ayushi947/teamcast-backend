@@ -1,0 +1,189 @@
+enum education_level {
+  HIGH_SCHOOL
+  BACHELORS
+  MASTERS
+  DOCTORATE
+  OTHER
+}
+
+enum certification_level {
+  BASIC
+  INTERMEDIATE
+  ADVANCED
+  EXPERT
+}
+
+enum notice_period {
+  IMMEDIATE
+  ONE_WEEK
+  TWO_WEEKS
+  ONE_MONTH
+  TWO_MONTHS
+  THREE_MONTHS
+}
+
+enum us_work_authorization_status {
+  US_CITIZEN
+  GREEN_CARD_HOLDER
+  WORK_VISA
+  EAD
+  STUDENT_VISA
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+model resume {
+  id              String    @id @default(uuid())
+  candidate       candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId     String    @unique
+  phone           String?
+  location        String?
+  summary         String
+  primaryIndustry String
+  industries      String[]
+
+  highestEducationLevel education_level  @default(BACHELORS)
+  totalExperience       Int // in years
+  currentJobTitle       String?
+  currentCompany        String?
+  currentIndustry       String?
+  currentWorkLocation   String?
+  currentWorkType       work_type?
+  currentWorkCommitment work_commitment?
+  currentWorkSchedule   work_schedule?
+  currentSalary         Float?
+  currentSalaryCurrency String?
+  availableFrom         DateTime?
+  noticePeriod          notice_period?   @default(IMMEDIATE)
+  resumeSkills          String[]
+
+  // USA Work Authorization fields
+  isUSWorkAuthorized         Boolean?
+  requiresUSVisaSponsorship  Boolean?
+  usWorkAuthorizationStatus  us_work_authorization_status?
+  usWorkAuthorizationDetails String? // Additional details if needed
+
+  certifications resume_certification[]
+  education      resume_education[]
+  experience     resume_experience[]
+  languages      String[]
+  social         resume_social?
+  parsingTask    resume_parsing_task?
+  assessmentTask resume_assessment_task?
+  resumeFileUrl  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([primaryIndustry])
+  @@index([totalExperience])
+  @@map("resumes")
+}
+
+model resume_social {
+  id        String   @id @default(uuid())
+  resume    resume   @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId  String   @unique
+  linkedin  String?
+  twitter   String?
+  github    String?
+  portfolio String?
+  leetcode  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("resume_socials")
+}
+
+model resume_certification {
+  id            String               @id @default(uuid())
+  resume        resume               @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId      String
+  name          String
+  issuer        String
+  issueDate     DateTime
+  expiryDate    DateTime?
+  credentialId  String?
+  credentialUrl String?
+  level         certification_level?
+  category      String?
+  description   String?
+  createdAt     DateTime             @default(now())
+  updatedAt     DateTime             @updatedAt
+
+  @@map("resume_certifications")
+}
+
+model resume_education {
+  id                String          @id @default(uuid())
+  resume            resume          @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId          String
+  institution       String
+  level             education_level
+  degree            String
+  fieldOfStudy      String
+  startDate         DateTime
+  endDate           DateTime?
+  currentlyPursuing Boolean         @default(false)
+  gpa               Float?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  achievements String[]
+
+  @@map("resume_educations")
+}
+
+model resume_experience {
+  id               String          @id @default(uuid())
+  resume           resume          @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId         String
+  company          String
+  position         String
+  industry         String
+  startDate        DateTime
+  endDate          DateTime?
+  currentlyWorking Boolean         @default(false)
+  description      String
+  type             work_type
+  commitment       work_commitment
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+
+  location         String?
+  projects         resume_project[]
+  skills           String[]
+  achievements     String[]
+  responsibilities String[]
+
+  @@index([industry])
+  @@index([type, commitment])
+  @@map("resume_experiences")
+}
+
+model resume_project {
+  id               String            @id @default(uuid())
+  experience       resume_experience @relation(fields: [experienceId], references: [id], onDelete: Cascade)
+  experienceId     String
+  name             String
+  description      String
+  startDate        DateTime?
+  endDate          DateTime?
+  currentlyWorking Boolean           @default(false)
+  role             String
+  teamSize         Int?
+  url              String?
+  githubUrl        String?
+  demoUrl          String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  skills           String[]
+  responsibilities String[]
+  achievements     String[]
+  challenges       String[]
+  solutions        String[]
+  impact           String[]
+
+  @@map("resume_projects")
+}

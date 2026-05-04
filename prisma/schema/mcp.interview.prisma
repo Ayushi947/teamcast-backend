@@ -1,0 +1,212 @@
+// MCP Interview Schema
+// Agent-initiated interviews for skill assessment
+
+/// Interview status enum
+enum mcp_interview_status {
+  INVITED         // Invite sent to candidate
+  ACCEPTED        // Candidate accepted
+  DECLINED        // Candidate declined
+  EXPIRED         // No response within expiry period
+  IN_PROGRESS     // Candidate taking assessment
+  COMPLETED       // Assessment completed
+  EVALUATING      // AI reviewing responses
+  RESULTS_READY   // Results available for agent
+  CANCELLED       // Cancelled by agent/system
+}
+
+/// Assessment level for interview difficulty
+enum mcp_assessment_level {
+  JUNIOR       // Entry level questions
+  INTERMEDIATE // Mid-level challenges
+  SENIOR       // Senior level problems
+  LEAD         // Lead/Principal level
+}
+
+/// Skill proficiency level determined after assessment
+enum mcp_skill_proficiency {
+  BEGINNER      // 0-40%
+  INTERMEDIATE  // 41-70%
+  ADVANCED      // 71-90%
+  EXPERT        // 91-100%
+}
+
+/// MCP Interview - Agent-initiated interview requests
+model mcp_interview {
+  id                    String   @id @default(uuid())
+
+  // ============================================
+  // CANDIDATE REFERENCE
+  // ============================================
+
+  /// Link to existing candidate (if already in system)
+  candidateId           String?
+  candidate             candidate? @relation(fields: [candidateId], references: [id])
+
+  /// For new candidates not in system yet
+  isNewCandidate        Boolean  @default(false)
+  candidateData         Json?    // Stores candidate info until registration
+
+  /// Always required - candidate contact
+  candidateEmail        String
+  candidateName         String
+
+  /// After new candidate registers, link to their user record
+  linkedUserId          String?
+  linkedUser            user?    @relation(fields: [linkedUserId], references: [id], onDelete: SetNull)
+
+  // ============================================
+  // MCP AGENT INFO (Internal - not shown to candidate)
+  // ============================================
+
+  /// MCP client that requested this interview
+  mcpClientId           String
+  mcpClient             mcp_client @relation(fields: [mcpClientId], references: [id])
+
+  /// Agent's tracking IDs
+  externalReferenceId   String?  // Agent's reference for this request
+  externalCandidateId   String?  // Agent's ID for the candidate
+
+  // ============================================
+  // JOB CONTEXT (Shown to candidate)
+  // ============================================
+
+  /// Job title shown to candidate
+  jobTitle              String?
+
+  /// Company name shown to candidate
+  companyName           String?
+
+  /// Brief job description
+  jobDescription        String?  @db.Text
+
+  /// Job location
+  jobLocation           String?
+
+  // ============================================
+  // INTERVIEW CONFIGURATION (Internal)
+  // ============================================
+
+  /// Skills that agent wants to assess
+  skillsToAssess        String[]
+
+  /// Difficulty level for the assessment
+  assessmentLevel       mcp_assessment_level @default(INTERMEDIATE)
+
+  /// Custom instructions for AI section generation
+  customInstructions    String?  @db.Text
+
+  /// Expected assessment duration in minutes
+  expectedDurationMinutes Int?
+
+  /// Maximum number of sections to generate
+  maxSections           Int?
+
+  /// Resume file URL (if uploaded)
+  resumeFileUrl         String?
+
+  // ============================================
+  // STATUS TRACKING
+  // ============================================
+
+  status                mcp_interview_status @default(INVITED)
+
+  /// When invite was sent
+  invitedAt             DateTime @default(now())
+
+  /// When candidate accepted
+  acceptedAt            DateTime?
+
+  /// When candidate declined
+  declinedAt            DateTime?
+  declineReason         String?
+
+  /// When candidate started the assessment
+  startedAt             DateTime?
+
+  /// When assessment was completed
+  completedAt           DateTime?
+
+  /// When results became ready
+  resultsReadyAt        DateTime?
+
+  /// Invite expiry
+  expiresAt             DateTime
+
+  // ============================================
+  // ASSESSMENT LINK
+  // ============================================
+
+  /// Links to actual job_ai_assessment when candidate starts
+  assessmentId          String?  @unique
+  assessment            job_ai_assessment? @relation(fields: [assessmentId], references: [id])
+
+  // ============================================
+  // RESULTS
+  // ============================================
+
+  /// Overall score (0-100)
+  overallScore          Float?
+
+  /// Overall recommendation
+  recommendation        String?  // STRONG_HIRE, HIRE, MAYBE, NO_HIRE
+
+  /// Summary feedback
+  resultSummary         String?  @db.Text
+
+  // ============================================
+  // TIMESTAMPS
+  // ============================================
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  // ============================================
+  // RELATIONS
+  // ============================================
+
+  skillResults          mcp_interview_skill_result[]
+
+  // ============================================
+  // INDEXES
+  // ============================================
+
+  @@index([candidateId])
+  @@index([candidateEmail])
+  @@index([mcpClientId])
+  @@index([status])
+  @@index([linkedUserId])
+  @@index([externalReferenceId])
+  @@index([externalCandidateId])
+}
+
+/// Per-skill assessment results
+model mcp_interview_skill_result {
+  id                    String   @id @default(uuid())
+
+  /// Parent interview
+  interviewId           String
+  interview             mcp_interview @relation(fields: [interviewId], references: [id], onDelete: Cascade)
+
+  /// Skill being assessed
+  skillName             String
+
+  /// Score (0-100)
+  score                 Float?
+
+  /// Proficiency level determined
+  proficiencyLevel      mcp_skill_proficiency?
+
+  /// Detailed feedback
+  strengths             String[]
+  improvements          String[]
+  feedback              String?  @db.Text
+
+  /// Section details from assessment
+  sectionScores         Json?    // { sectionId, sectionName, score, timeSpent }[]
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@index([interviewId])
+  @@index([skillName])
+}

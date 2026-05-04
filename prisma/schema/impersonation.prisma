@@ -1,0 +1,17 @@
+model support_impersonation_session {
+  id            String    @id @default(uuid())
+  supportUserId String
+  targetUserId  String
+  startedAt     DateTime  @default(now())
+  endedAt       DateTime?
+  duration      Int? // Duration in seconds
+  isActive      Boolean   @default(true)
+  sessionToken  String?
+  reason        String?
+  metadata      Json?
+
+  @@index([supportUserId, isActive])
+  @@index([targetUserId, isActive])
+  @@index([startedAt])
+  @@map("support_impersonation_sessions")
+}

@@ -1,0 +1,32 @@
+enum job_posting_recruiter_assignment_status {
+  ACTIVE
+  REASSIGNED
+  COMPLETED
+  CANCELLED
+}
+
+model job_posting_recruiter_assignment {
+  id               String                                  @id @default(uuid())
+  jobPostingId     String
+  recruiterId      String
+  assignedAt       DateTime                                @default(now())
+  assignedBy       String? // ID of the user who made the assignment
+  status           job_posting_recruiter_assignment_status @default(ACTIVE)
+  notes            String?
+  completedAt      DateTime?
+  reassignedAt     DateTime?
+  reassignedReason String?
+
+  // Relations
+  jobPosting job_posting  @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  recruiter  support_user @relation("RecruiterAssignments", fields: [recruiterId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobPostingId, status], name: "unique_active_assignment")
+  @@index([jobPostingId])
+  @@index([recruiterId])
+  @@index([status])
+  @@map("job_posting_recruiter_assignments")
+}

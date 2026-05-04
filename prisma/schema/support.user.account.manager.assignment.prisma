@@ -1,0 +1,13 @@
+model support_user_account_manager_assignment {
+  id               String   @id @default(uuid())
+  supportUserId    String
+  accountManagerId String
+  assignedAt       DateTime @default(now())
+
+  supportUser    support_user @relation("SupportUserAccountManagerAssignments", fields: [supportUserId], references: [id], onDelete: Cascade)
+  accountManager support_user @relation("AccountManagerAssignments", fields: [accountManagerId], references: [id], onDelete: Cascade)
+
+  @@unique([supportUserId])
+  @@index([accountManagerId])
+  @@map("support_user_account_manager_assignments")
+}

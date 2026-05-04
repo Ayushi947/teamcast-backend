@@ -1,0 +1,345 @@
+// Onboarding Assessment
+enum onboarding_assessment_result {
+  NOT_AVAILABLE
+  PASSED
+  AI_REVIEW_FAILED
+  MANUAL_REVIEW_FAILED
+  TERMINATED_MAX_WARNINGS
+  TERMINATED_FOUL_LANGUAGE
+  TERMINATED_CANDIDATE_REQUEST
+  TERMINATED_INCIDENT
+}
+
+enum onboarding_assessment_recommendation {
+  HIGHLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+}
+
+enum onboarding_assessment_status {
+  NOT_STARTED
+  // AI Generation of the sections
+  AI_INITIALIZATION_IN_PROGRESS
+  AI_INITIALIZATION_COMPLETED
+  // Candidate undergoing the assessment
+  CANDIDATE_ASSESSMENT_IN_PROGRESS
+  CANDIDATE_ASSESSMENT_COMPLETED
+  // AI Review of the sections
+  AI_REVIEW_IN_PROGRESS
+  AI_REVIEW_COMPLETED
+  // Manual Review of the sections
+  MANUAL_REVIEW_IN_PROGRESS
+  MANUAL_REVIEW_COMPLETED
+  // Assessment completed
+  ASSESSMENT_COMPLETED
+  // Assessment failed
+  ASSESSMENT_FAILED
+  // Assessment terminated due to violations
+  ASSESSMENT_TERMINATED
+}
+
+model onboarding_assessment {
+  id                     String                       @id @default(uuid())
+  candidate              candidate                    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId            String
+  status                 onboarding_assessment_status @default(NOT_STARTED)
+  result                 onboarding_assessment_result @default(NOT_AVAILABLE)
+  score                  Float                        @default(0)
+  startedAt              DateTime?
+  completedAt            DateTime?
+  endedAt                DateTime? // When assessment was terminated or ended
+  automaticallyPublished Boolean                      @default(false)
+  terminationReason      String? // Reason for termination if applicable
+
+  duration             Int?    @default(3600) // Duration in seconds
+  selectedForNextRound Boolean @default(false)
+
+  // Terms acceptance tracking
+  termsAccepted   Boolean   @default(false)
+  termsAcceptedAt DateTime?
+
+  // LiveKit integration
+  livekitRoomName String? // LiveKit room name for assessment session
+
+  sections                     onboarding_assessment_section[]
+  progressState                onboarding_assessment_progress?
+  videoAnalysis                onboarding_assessment_video_analysis?
+  videoAnalysisStatus          onboarding_assessment_video_analysis_status @default(NOT_STARTED)
+  videoAnalysisError           String?
+  proctoring                   onboarding_assessment_proctoring?
+  onboardingAssessmentSettings onboarding_assessment_settings?
+  task                         onboarding_assessment_task?
+  history                      onboarding_assessment_history[]
+
+  // Analysis Results
+  strengths           String[] @default([])
+  areasForImprovement String[] @default([])
+
+  overallFeedback   String?                               @db.Text
+  recommendation    onboarding_assessment_recommendation?
+  experienceSummary String?                               @db.Text
+  educationSummary  String?                               @db.Text
+
+  skills          String[] @default([])
+  technicalSkills String[] @default([])
+  softSkills      String[] @default([])
+  industriesFit   String[] @default([])
+  jobRolesFit     String[] @default([])
+
+  resumeText String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_assessments")
+}
+
+enum onboarding_assessment_video_analysis_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// Per-assessment settings copied from global settings
+model onboarding_assessment_settings {
+  id String @id @default(uuid())
+
+  assessment   onboarding_assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                @unique
+
+  // Source of the settings
+  globalSettings   global_onboarding_assessment_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+
+  // Max sections and questions per section
+  maxSections            Int @default(6)
+  maxQuestionsPerSection Int @default(8)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(10) // Minimum video length in minutes
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(true) // Auto-publish profile on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect  String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_assessment_settings")
+}
+
+// Model to track assessment progress for restoration after refresh
+model onboarding_assessment_progress {
+  id                String                @id @default(uuid())
+  assessment        onboarding_assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId      String                @unique
+  currentSectionId  String?
+  currentQuestionId String?
+  lastSavedAt       DateTime              @default(now())
+  progressData      Json? // Stores the complete state of the assessment
+  isCompleted       Boolean               @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_assessment_progress")
+}
+
+enum onboarding_assessment_section_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum onboarding_assessment_section_result {
+  NOT_AVAILABLE
+  PASSED
+  FAILED_AI_REVIEW
+  FAILED_MANUAL_REVIEW
+}
+
+model onboarding_assessment_section {
+  id            String                               @id @default(uuid())
+  assessment    onboarding_assessment                @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId  String
+  title         String
+  description   String
+  type          String // Type of section, will be generated by AI
+  status        onboarding_assessment_section_status @default(NOT_STARTED)
+  result        onboarding_assessment_section_result @default(NOT_AVAILABLE)
+  score         Float                                @default(0)
+  order         Int                                  @default(0)
+  isRequired    Boolean                              @default(true)
+  passThreshold Float                                @default(0.7) // Score threshold to pass (0.0-1.0)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  feedback      String?
+
+  // New feedback fields
+  strengths           String[] // Section-specific strengths
+  areasForImprovement String[] // Section-specific improvement areas
+
+  questions onboarding_assessment_question[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assessmentId, order])
+  @@map("onboarding_assessment_sections")
+}
+
+model onboarding_assessment_question {
+  id             String                        @id @default(uuid())
+  section        onboarding_assessment_section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId      String
+  question       String
+  questionType   question_type // MULTIPLE_CHOICE, TEXT, CODE, etc.
+  options        Json? // For multiple choice options
+  correctAnswer  String? // Optional correct answer for auto-grading
+  answerGiven    String? // Candidate's answer
+  score          Float                         @default(0)
+  maxScore       Float                         @default(1.0)
+  order          Int                           @default(0)
+  isRequired     Boolean                       @default(true)
+  isLastQuestion Boolean                       @default(false)
+  feedback       String?
+  isAnswered     Boolean                       @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId, order])
+  @@map("onboarding_assessment_questions")
+}
+
+// Video Analysis model for assessment recording and analysis
+model onboarding_assessment_video_analysis {
+  id           String                @id @default(uuid())
+  assessment   onboarding_assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                @unique
+
+  videoUrl           String? // URL to the recorded assessment
+  highlightsVideoUrl String? // URL to the generated highlights video
+
+  transcriptText String? @db.Text // Full transcript of the assessment
+
+  overallScore    Float?
+  overallFeedback String? @db.Text
+
+  // Performance metrics
+  engagementScore    Float?
+  engagementFeedback String?
+
+  confidenceScore    Float?
+  confidenceFeedback String?
+
+  clarityScore    Float?
+  clarityFeedback String?
+
+  professionalDemeanorScore    Float?
+  professionalDemeanorFeedback String?
+
+  proctoringScore    Float?
+  proctoringFeedback String?
+
+  // Analysis Results
+  strengths           String[] @default([])
+  areasForImprovement String[] @default([])
+
+  highlightsInstructions String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_assessment_video_analysis")
+}
+
+// Proctoring model to track suspicious behavior
+model onboarding_assessment_proctoring {
+  id           String                @id @default(uuid())
+  assessment   onboarding_assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                @unique
+
+  // Proctoring metrics
+  warningCount     Int   @default(0)
+  suspiciousEvents Json? // Log of suspicious events with timestamps
+
+  // Suspicious behavior types
+  tabSwitches             Int     @default(0)
+  copyPasteAttempts       Int     @default(0)
+  multiplePersonsDetected Boolean @default(false)
+  audioIrregularities     Boolean @default(false)
+  screenShareViolations   Boolean @default(false)
+
+  automaticallyFailed  Boolean @default(false)
+  manualReviewRequired Boolean @default(false)
+  reviewerNotes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("onboarding_assessment_proctoring")
+}
+
+// History table to track onboarding assessment resets and changes
+model onboarding_assessment_history {
+  id String @id @default(uuid())
+
+  // Reference to the original assessment
+  onboardingAssessment   onboarding_assessment @relation(fields: [onboardingAssessmentId], references: [id], onDelete: Cascade)
+  onboardingAssessmentId String
+
+  candidate   candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String
+
+  // Action tracking
+  action       String // 'RESET', 'MANUAL_UPDATE', etc.
+  actionReason String? // Optional reason for the action
+  performedBy  String // User ID who performed the action
+  performedAt  DateTime @default(now())
+
+  // Complete assessment state snapshot as JSON metadata
+  metadata Json // Full assessment state before the action
+
+  createdAt DateTime @default(now())
+
+  @@index([onboardingAssessmentId])
+  @@index([candidateId])
+  @@index([performedBy])
+  @@index([action])
+  @@index([performedAt])
+  @@map("onboarding_assessment_history")
+}

@@ -1,0 +1,269 @@
+// candidate Models
+enum candidate_status {
+  NEW
+  ONBOARDED
+  REJECTED
+  HIRED
+}
+
+// job search status enum
+enum candidate_job_search_status {
+  OPEN_TO_OPPORTUNITIES
+  NOT_LOOKING
+}
+
+// candidate assessment stage enum
+enum candidate_assessment_stage {
+  RESUME_ASSESSMENT
+  ONBOARDING_ASSESSMENT
+  JOB_AI_ASSESSMENT
+}
+
+// candidate resume assessment status enum
+enum candidate_resume_assessment_status {
+  ASSESSMENT_NOT_DONE
+  ASSESSMENT_IN_PROGRESS
+  ASSESSMENT_COMPLETED
+  ASSESSMENT_FAILED
+}
+
+// candidate onboarding assessment status enum
+enum candidate_onboarding_assessment_status {
+  ASSESSMENT_NOT_DONE
+  ASSESSMENT_IN_PROGRESS
+  ASSESSMENT_RESET
+  ASSESSMENT_COMPLETED
+  ASSESSMENT_FAILED
+}
+
+// candidate shortlist status enum
+enum candidate_shortlist_status {
+  SHORTLISTED
+  NOT_INTERESTED
+  REJECTED
+}
+
+// candidate review status enum
+enum candidate_review_status {
+  PENDING_PUBLISH
+  PUBLISHED
+  UNPUBLISHED
+}
+
+model candidate {
+  id     String @id @default(uuid())
+  user   user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId String @unique
+
+  status          candidate_status           @default(NEW)
+  assessmentStage candidate_assessment_stage @default(RESUME_ASSESSMENT)
+
+  resumeAssessmentStatus candidate_resume_assessment_status @default(ASSESSMENT_NOT_DONE)
+  resumeAssessments      resume_assessment[]
+
+  onboardingAssessmentStatus candidate_onboarding_assessment_status @default(ASSESSMENT_NOT_DONE)
+  onboardingAssessments      onboarding_assessment[]
+  jobAiAssessments           job_ai_assessment[]
+
+  isPublished          Boolean                 @default(false)
+  isDirty              Boolean                 @default(true)
+  completionPercentage Int                     @default(0)
+  reviewStatus         candidate_review_status @default(PENDING_PUBLISH)
+
+  jobSearchStatus candidate_job_search_status @default(OPEN_TO_OPPORTUNITIES)
+
+  sex           sex?            @default(PREFER_NOT_TO_SAY)
+  birthDate     DateTime?
+  maritalStatus marital_status? @default(PREFER_NOT_TO_SAY)
+
+  // Note field for publishing candidates
+  note String?
+
+  resume       resume?
+  applications job_application[]
+
+  // Panel assessment relations
+  panelAssessments           job_panel_assessment[]
+  panelAssessmentInvitations job_panel_assessment_invitation[]
+
+  jobAiAssessmentInvitations job_ai_assessment_invitation[]
+
+  // Added relation for support invitations
+  supportInvitations support_invitation[] @relation("SupportInvitationCandidate")
+
+  settings candidate_settings?
+  views    candidate_view[] // Add relation to track views
+
+  recommendationsReceived job_posting_recommendation[]
+
+  // Archived recommendations
+  archivedRecommendations job_posting_recommendation_archive[]
+  recommendations         candidate_recommendation[]
+  savedJobs               candidate_saved_job[]
+  practiceAssessments     practice_assessment[]
+  publicPracticeAssessments public_practice_assessment[]
+  candidateSubscription   candidate_subscription?
+  preferences             candidate_preferences?
+
+  // Integration relations
+  candidateIntegrations candidate_integration[]
+
+  // Import relations
+  candidateImports candidate_import[] @relation("CandidateImports")
+
+  // Shortlist relations
+  shortlists candidate_shortlist[]
+
+  // Candidate recommendation cron relations
+  candidateRecommendationSyncTasks candidate_recommendation_sync_task[]
+
+  // Onboarding assessment history relations
+  onboardingAssessmentHistory onboarding_assessment_history[]
+  // Job AI assessment history relations
+  jobAiAssessmentHistory      job_ai_assessment_history[]
+
+  partner   partner? @relation(fields: [partnerId], references: [id])
+  partnerId String?
+
+  // MCP interview relations
+  mcpInterviews mcp_interview[]
+
+  // Import tracking fields
+  isImportedCandidate   Boolean @default(false)
+  importedByClientId    String?
+  importedJobPostingId  String?
+  importedIntegrationId String? // ID of the integration provider used for import
+  // Signup source tracking
+  isInviteSignup Boolean @default(false)
+
+  // Soft delete and update tracking
+  deletedAt DateTime?
+  updatedBy String?
+  createdBy String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Recommendations sync tracking
+  recommendationsSync DateTime? @default(now())
+
+  @@index([status])
+  @@index([jobSearchStatus])
+  @@index([isPublished])
+  @@index([reviewStatus])
+  @@index([deletedAt])
+  @@index([isImportedCandidate])
+  @@index([importedByClientId])
+  @@index([importedJobPostingId])
+  @@index([importedIntegrationId])
+  @@map("candidates")
+}
+
+model candidate_preferences {
+  id          String    @id @default(uuid())
+  candidate   candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String    @unique
+
+  preferredIndustries       String[]
+  preferredLocations        String[]
+  preferredWorkTypes        work_type[]
+  preferredJobTitles        String[]
+  preferredJobCommitments   String[]
+  preferredJobSchedules     work_schedule[]
+  preferredSalaryMin        Float?
+  preferredSalaryMax        Float?
+  preferredSalaryCurrency   String?         @default("USD")
+  preferredEquity           Boolean?        @default(false)
+  preferredBenefits         String[]
+  preferredResponsibilities String[]
+  preferredTags             String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
+  @@map("candidate_preferences")
+}
+
+// Candidate Settings Model
+model candidate_settings {
+  id          String    @id @default(uuid())
+  candidate   candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String    @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled   Boolean @default(true)
+  emailNotifications     Boolean @default(true)
+  pushNotifications      Boolean @default(true)
+  jobAlerts              Boolean @default(true)
+  applicationUpdates     Boolean @default(true)
+  profileVisibility      Boolean @default(true)
+  shareDataWithEmployers Boolean @default(true)
+
+  darkMode Boolean @default(false)
+  language String  @default("en")
+  timezone String  @default("UTC")
+
+  // Using enum instead of string
+  preferredCommunicationChannel communication_channel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("candidate_settings")
+}
+
+// Saved Jobs Feature
+model candidate_saved_job {
+  id           String      @id @default(uuid())
+  candidate    candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId  String
+  jobPosting   job_posting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String
+  savedAt      DateTime    @default(now())
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, jobPostingId])
+  @@index([candidateId])
+  @@index([jobPostingId])
+  @@map("candidate_saved_jobs")
+}
+
+// Candidate Shortlist Model
+model candidate_shortlist {
+  id           String       @id @default(uuid())
+  candidate    candidate    @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId  String
+  client       client       @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String
+  jobPosting   job_posting? @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String?
+
+  status candidate_shortlist_status @default(SHORTLISTED)
+  notes  String?
+  rating Float? // Rating from 1-5
+  tags   String[] // Custom tags like "Top Candidate", "Good Fit", etc.
+
+  shortlistedBy   client_user @relation(fields: [shortlistedById], references: [id], onDelete: Cascade)
+  shortlistedById String
+
+  // Tracking fields
+  viewedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, clientId, jobPostingId])
+  @@index([clientId])
+  @@index([candidateId])
+  @@index([jobPostingId])
+  @@index([status])
+  @@index([shortlistedById])
+  @@map("candidate_shortlists")
+}

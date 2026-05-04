@@ -1,0 +1,62 @@
+// Resume Assessment
+enum resume_assessment_result {
+  NOT_AVAILABLE
+  PASSED
+  AI_REVIEW_FAILED
+  MANUAL_REVIEW_FAILED
+}
+
+enum resume_assessment_recommendation {
+  HIGHLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+}
+
+enum resume_assessment_status {
+  // Candidate not started the assessment
+  NOT_STARTED
+  // AI Review of the assessment
+  AI_REVIEW_IN_PROGRESS
+  AI_REVIEW_COMPLETED
+  // Manual Review of the assessment
+  MANUAL_REVIEW_IN_PROGRESS
+  MANUAL_REVIEW_COMPLETED
+  // Candidate completed the assessment
+  ASSESSMENT_COMPLETED
+  // Assessment failed
+  ASSESSMENT_FAILED
+}
+
+model resume_assessment {
+  id              String                   @id @default(uuid())
+  candidateId     String
+  candidate       candidate                @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  status          resume_assessment_status @default(NOT_STARTED)
+  result          resume_assessment_result @default(NOT_AVAILABLE)
+  score           Float                    @default(0)
+  confidenceScore Float                    @default(0)
+  resumeText      String                   @db.Text
+
+  // Analysis Results
+  strengths           String[] @default([])
+  areasForImprovement String[] @default([])
+
+  overallFeedback   String?                           @db.Text
+  recommendation    resume_assessment_recommendation?
+  experienceSummary String?                           @db.Text
+  educationSummary  String?                           @db.Text
+
+  skills          String[] @default([])
+  technicalSkills String[] @default([])
+  softSkills      String[] @default([])
+  industriesFit   String[] @default([])
+  jobRolesFit     String[] @default([])
+
+  yearsOfExperience Float?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  task        resume_assessment_task?
+  createdAt   DateTime                @default(now())
+  updatedAt   DateTime                @updatedAt
+}

@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TeamCast A2A Protocol Demo</title>
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --error: #ef4444;
+      --warning: #f59e0b;
+      --bg: #0f172a;
+      --bg-card: #1e293b;
+      --bg-input: #334155;
+      --text: #f1f5f9;
+      --text-muted: #94a3b8;
+      --border: #475569;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+      background: linear-gradient(135deg, var(--primary), #a855f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 0.5rem;
+    }
+
+    header p {
+      color: var(--text-muted);
+      font-size: 1.1rem;
+    }
+
+    .demo-layout {
+      display: grid;
+      grid-template-columns: 350px 1fr;
+      gap: 2rem;
+    }
+
+    @media (max-width: 1024px) {
+      .demo-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border-radius: 12px;
+      padding: 1.5rem;
+      border: 1px solid var(--border);
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .card h3 .icon {
+      width: 20px;
+      height: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.95rem;
+      transition: border-color 0.2s;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      background: var(--bg-input);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .btn-secondary:hover {
+      background: var(--border);
+    }
+
+    .skill-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .skill-btn {
+      padding: 0.75rem 1rem;
+      background: var(--bg-input);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      color: var(--text);
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.2s;
+    }
+
+    .skill-btn:hover {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.1);
+    }
+
+    .skill-btn.active {
+      border-color: var(--primary);
+      background: rgba(99, 102, 241, 0.2);
+    }
+
+    .skill-btn .skill-name {
+      font-weight: 500;
+      margin-bottom: 0.25rem;
+    }
+
+    .skill-btn .skill-desc {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .main-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .agent-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 2rem;
+      padding: 1.5rem;
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .agent-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem 1.5rem;
+      background: var(--bg-input);
+      border-radius: 12px;
+      min-width: 150px;
+    }
+
+    .agent-box .agent-icon {
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, var(--primary), #a855f7);
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+    }
+
+    .agent-box .agent-name {
+      font-weight: 600;
+    }
+
+    .agent-box .agent-type {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+
+    .flow-arrow {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-muted);
+    }
+
+    .flow-arrow svg {
+      width: 60px;
+      height: 24px;
+    }
+
+    .flow-arrow.active svg {
+      color: var(--primary);
+    }
+
+    .flow-arrow.active .flow-label {
+      color: var(--primary);
+    }
+
+    .flow-arrow .flow-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .panels {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .panels {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .panel {
+      background: var(--bg-card);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      overflow: hidden;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 1rem;
+      background: var(--bg-input);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .panel-header h4 {
+      font-size: 0.9rem;
+      font-weight: 500;
+    }
+
+    .panel-header .method-badge {
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .method-badge.post {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .method-badge.get {
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--primary);
+    }
+
+    .panel-body {
+      padding: 1rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .code-block {
+      background: var(--bg);
+      border-radius: 8px;
+      padding: 1rem;
+      font-family: 'Fira Code', 'Consolas', monospace;
+      font-size: 0.85rem;
+      white-space: pre-wrap;
+      word-break: break-word;
+      overflow-x: auto;
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .status-indicator.idle {
+      background: rgba(148, 163, 184, 0.2);
+      color: var(--text-muted);
+    }
+
+    .status-indicator.loading {
+      background: rgba(99, 102, 241, 0.2);
+      color: var(--primary);
+    }
+
+    .status-indicator.success {
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+    }
+
+    .status-indicator.error {
+      background: rgba(239, 68, 68, 0.2);
+      color: var(--error);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    .status-indicator.loading .status-dot {
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .json-key { color: #a855f7; }
+    .json-string { color: #10b981; }
+    .json-number { color: #f59e0b; }
+    .json-boolean { color: #3b82f6; }
+    .json-null { color: #94a3b8; }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .connection-status.connected {
+      color: var(--success);
+    }
+
+    .connection-status.disconnected {
+      color: var(--error);
+    }
+
+    .timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 1rem;
+      padding: 0.75rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+
+    .timeline-item .time {
+      color: var(--text-muted);
+      font-family: monospace;
+      white-space: nowrap;
+    }
+
+    .timeline-item .event {
+      flex: 1;
+    }
+
+    .timeline-item.request { border-left: 3px solid var(--primary); }
+    .timeline-item.response { border-left: 3px solid var(--success); }
+    .timeline-item.error { border-left: 3px solid var(--error); }
+
+    .agent-card-preview {
+      font-size: 0.85rem;
+    }
+
+    .agent-card-preview .capability {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.25rem 0.5rem;
+      background: rgba(16, 185, 129, 0.2);
+      color: var(--success);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      margin-right: 0.5rem;
+      margin-bottom: 0.25rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .tab {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 0.875rem;
+      transition: all 0.2s;
+    }
+
+    .tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .tab:hover:not(.active) {
+      border-color: var(--primary);
+      color: var(--text);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .skill-form {
+      margin-top: 1rem;
+    }
+
+    .result-summary {
+      padding: 1rem;
+      background: var(--bg-input);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+    }
+
+    .result-summary h4 {
+      margin-bottom: 0.5rem;
+    }
+
+    .result-summary .score {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--success);
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    .badge-success { background: rgba(16, 185, 129, 0.2); color: var(--success); }
+    .badge-warning { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+    .badge-error { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+    .badge-info { background: rgba(99, 102, 241, 0.2); color: var(--primary); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>TeamCast A2A Protocol Demo</h1>
+      <p>Interactive demonstration of Agent-to-Agent communication for technical interviews</p>
+    </header>
+
+    <div class="demo-layout">
+      <aside class="sidebar">
+        <!-- Connection Config -->
+        <div class="card">
+          <h3>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 15a3 3 0 100-6 3 3 0 000 6z"/>
+              <path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-2 2 2 2 0 01-2-2v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 01-2-2 2 2 0 012-2h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 012-2 2 2 0 012 2v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 012 2 2 2 0 01-2 2h-.09a1.65 1.65 0 00-1.51 1z"/>
+            </svg>
+            Configuration
+          </h3>
+          <div class="form-group">
+            <label>API Base URL</label>
+            <input type="text" id="baseUrl" value="" placeholder="http://localhost:3000">
+          </div>
+          <div class="form-group">
+            <label>API Key</label>
+            <input type="password" id="apiKey" placeholder="Enter your API key">
+          </div>
+          <button class="btn btn-secondary" onclick="discoverAgent()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+            Discover Agent
+          </button>
+        </div>
+
+        <!-- Skills -->
+        <div class="card">
+          <h3>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.77-3.77a6 6 0 01-7.94 7.94l-6.91 6.91a2.12 2.12 0 01-3-3l6.91-6.91a6 6 0 017.94-7.94l-3.76 3.76z"/>
+            </svg>
+            A2A Skills
+          </h3>
+          <div class="skill-buttons">
+            <button class="skill-btn" onclick="selectSkill('interview.request')">
+              <div class="skill-name">interview.request</div>
+              <div class="skill-desc">Request a technical interview</div>
+            </button>
+            <button class="skill-btn" onclick="selectSkill('interview.status')">
+              <div class="skill-name">interview.status</div>
+              <div class="skill-desc">Check interview status</div>
+            </button>
+            <button class="skill-btn" onclick="selectSkill('interview.results')">
+              <div class="skill-name">interview.results</div>
+              <div class="skill-desc">Get interview results</div>
+            </button>
+            <button class="skill-btn" onclick="selectSkill('interview.list')">
+              <div class="skill-name">interview.list</div>
+              <div class="skill-desc">List all interviews</div>
+            </button>
+            <button class="skill-btn" onclick="selectSkill('interview.cancel')">
+              <div class="skill-name">interview.cancel</div>
+              <div class="skill-desc">Cancel pending interview</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Skill Form -->
+        <div class="card" id="skillFormCard">
+          <h3>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+            <span id="skillFormTitle">Skill Parameters</span>
+          </h3>
+
+          <!-- Interview Request Form -->
+          <div id="form-interview.request" class="skill-form hidden">
+            <div class="form-group">
+              <label>Candidate Email *</label>
+              <input type="email" id="candidateEmail" placeholder="john@example.com">
+            </div>
+            <div class="form-group">
+              <label>Candidate Name *</label>
+              <input type="text" id="candidateName" placeholder="John Doe">
+            </div>
+            <div class="form-group">
+              <label>Skills to Assess * (comma-separated)</label>
+              <input type="text" id="skillsToAssess" placeholder="JavaScript, React, Node.js">
+            </div>
+            <div class="form-group">
+              <label>Duration (minutes) *</label>
+              <input type="number" id="expectedDurationMinutes" placeholder="45" min="1">
+            </div>
+            <div class="form-group">
+              <label>Number of Sections *</label>
+              <input type="number" id="maxSections" placeholder="3" min="1">
+            </div>
+            <div class="form-group">
+              <label>Assessment Level</label>
+              <select id="assessmentLevel">
+                <option value="JUNIOR">Junior</option>
+                <option value="INTERMEDIATE" selected>Intermediate</option>
+                <option value="SENIOR">Senior</option>
+                <option value="LEAD">Lead</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Job Title (optional)</label>
+              <input type="text" id="jobTitle" placeholder="Senior Frontend Engineer">
+            </div>
+            <div class="form-group">
+              <label>External Reference ID (optional)</label>
+              <input type="text" id="externalReferenceId" placeholder="your-tracking-id">
+            </div>
+          </div>
+
+          <!-- Interview Status Form -->
+          <div id="form-interview.status" class="skill-form hidden">
+            <div class="form-group">
+              <label>Interview ID</label>
+              <input type="text" id="statusInterviewId" placeholder="int_abc123">
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-top: 0.5rem;">
+              Or use external reference ID or candidate email
+            </p>
+          </div>
+
+          <!-- Interview Results Form -->
+          <div id="form-interview.results" class="skill-form hidden">
+            <div class="form-group">
+              <label>Interview ID *</label>
+              <input type="text" id="resultsInterviewId" placeholder="int_abc123">
+            </div>
+          </div>
+
+          <!-- Interview List Form -->
+          <div id="form-interview.list" class="skill-form hidden">
+            <div class="form-group">
+              <label>Status Filter (optional)</label>
+              <select id="listStatus">
+                <option value="">All Statuses</option>
+                <option value="INVITED">Invited</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="COMPLETED">Completed</option>
+                <option value="RESULTS_READY">Results Ready</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Limit</label>
+              <input type="number" id="listLimit" value="10" min="1" max="100">
+            </div>
+          </div>
+
+          <!-- Interview Cancel Form -->
+          <div id="form-interview.cancel" class="skill-form hidden">
+            <div class="form-group">
+              <label>Interview ID *</label>
+              <input type="text" id="cancelInterviewId" placeholder="int_abc123">
+            </div>
+            <div class="form-group">
+              <label>Reason (optional)</label>
+              <input type="text" id="cancelReason" placeholder="Position filled">
+            </div>
+          </div>
+
+          <button class="btn btn-primary" onclick="executeSkill()" id="executeBtn" style="margin-top: 1rem;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+            Execute Skill
+          </button>
+        </div>
+      </aside>
+
+      <main class="main-content">
+        <!-- Agent Flow Visualization -->
+        <div class="agent-flow">
+          <div class="agent-box">
+            <div class="agent-icon">R</div>
+            <div class="agent-name">Recruiting Agent</div>
+            <div class="agent-type">External Platform</div>
+          </div>
+
+          <div class="flow-arrow" id="requestArrow">
+            <svg viewBox="0 0 60 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M0 12h50M50 12l-8-8M50 12l-8 8"/>
+            </svg>
+            <span class="flow-label">A2A Request</span>
+          </div>
+
+          <div class="agent-box">
+            <div class="agent-icon">T</div>
+            <div class="agent-name">TeamCast Agent</div>
+            <div class="agent-type">Interview Platform</div>
+          </div>
+
+          <div class="flow-arrow" id="responseArrow">
+            <svg viewBox="0 0 60 24" fill="none" stroke="currentColor" stroke-width="2" style="transform: rotate(180deg)">
+              <path d="M0 12h50M50 12l-8-8M50 12l-8 8"/>
+            </svg>
+            <span class="flow-label">A2A Response</span>
+          </div>
+
+          <div class="agent-box">
+            <div class="agent-icon">R</div>
+            <div class="agent-name">Recruiting Agent</div>
+            <div class="agent-type">Process Results</div>
+          </div>
+        </div>
+
+        <!-- Status -->
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div class="status-indicator" id="statusIndicator">
+            <span class="status-dot"></span>
+            <span id="statusText">Ready</span>
+          </div>
+          <div class="connection-status" id="connectionStatus">
+            <span class="status-dot"></span>
+            <span>Not Connected</span>
+          </div>
+        </div>
+
+        <!-- Request/Response Panels -->
+        <div class="panels">
+          <div class="panel">
+            <div class="panel-header">
+              <h4>Request</h4>
+              <span class="method-badge post">POST</span>
+            </div>
+            <div class="panel-body">
+              <div class="code-block" id="requestPanel">
+{
+  "jsonrpc": "2.0",
+  "method": "message/send",
+  "params": { ... },
+  "id": "demo-1"
+}
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="panel-header">
+              <h4>Response</h4>
+              <span class="method-badge get" id="responseStatus">---</span>
+            </div>
+            <div class="panel-body">
+              <div class="code-block" id="responsePanel">
+// Response will appear here
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent Card / Timeline -->
+        <div class="card">
+          <div class="tabs">
+            <button class="tab active" onclick="showTab('agentCard')">Agent Card</button>
+            <button class="tab" onclick="showTab('timeline')">Event Timeline</button>
+          </div>
+
+          <div id="agentCardTab" class="agent-card-preview">
+            <p style="color: var(--text-muted);">Click "Discover Agent" to fetch the Agent Card</p>
+          </div>
+
+          <div id="timelineTab" class="hidden">
+            <div class="timeline" id="timeline">
+              <div class="timeline-item request">
+                <span class="time">--:--:--</span>
+                <span class="event">Waiting for first request...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let currentSkill = null;
+    let agentCard = null;
+    let requestId = 1;
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      // Set default base URL
+      const baseUrlInput = document.getElementById('baseUrl');
+      baseUrlInput.value = window.location.origin;
+    });
+
+    // Syntax highlighting for JSON
+    function highlightJson(json) {
+      if (typeof json !== 'string') {
+        json = JSON.stringify(json, null, 2);
+      }
+      return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, (match) => {
+        let cls = 'json-number';
+        if (/^"/.test(match)) {
+          if (/:$/.test(match)) {
+            cls = 'json-key';
+          } else {
+            cls = 'json-string';
+          }
+        } else if (/true|false/.test(match)) {
+          cls = 'json-boolean';
+        } else if (/null/.test(match)) {
+          cls = 'json-null';
+        }
+        return '<span class="' + cls + '">' + match + '</span>';
+      });
+    }
+
+    // Update status
+    function setStatus(status, text) {
+      const indicator = document.getElementById('statusIndicator');
+      const statusText = document.getElementById('statusText');
+      indicator.className = 'status-indicator ' + status;
+      statusText.textContent = text;
+    }
+
+    // Update connection status
+    function setConnectionStatus(connected, text) {
+      const el = document.getElementById('connectionStatus');
+      el.className = 'connection-status ' + (connected ? 'connected' : 'disconnected');
+      el.innerHTML = '<span class="status-dot"></span><span>' + text + '</span>';
+    }
+
+    // Add timeline event
+    function addTimelineEvent(type, message) {
+      const timeline = document.getElementById('timeline');
+      const now = new Date();
+      const time = now.toTimeString().split(' ')[0];
+
+      const item = document.createElement('div');
+      item.className = 'timeline-item ' + type;
+      item.innerHTML = '<span class="time">' + time + '</span><span class="event">' + message + '</span>';
+
+      // Remove placeholder if exists
+      const placeholder = timeline.querySelector('.event');
+      if (placeholder && placeholder.textContent.includes('Waiting')) {
+        timeline.innerHTML = '';
+      }
+
+      timeline.insertBefore(item, timeline.firstChild);
+    }
+
+    // Discover Agent
+    async function discoverAgent() {
+      const baseUrl = document.getElementById('baseUrl').value.trim();
+      if (!baseUrl) {
+        alert('Please enter a base URL');
+        return;
+      }
+
+      setStatus('loading', 'Discovering agent...');
+      addTimelineEvent('request', 'Fetching Agent Card from ' + baseUrl);
+
+      try {
+        const response = await fetch(baseUrl + '/.well-known/agent.json');
+        if (!response.ok) throw new Error('Failed to fetch agent card');
+
+        agentCard = await response.json();
+
+        setConnectionStatus(true, 'Connected to ' + agentCard.name);
+        setStatus('success', 'Agent discovered');
+        addTimelineEvent('response', 'Agent Card received: ' + agentCard.name);
+
+        // Display agent card
+        const agentCardTab = document.getElementById('agentCardTab');
+        agentCardTab.innerHTML = `
+          <div style="margin-bottom: 1rem;">
+            <strong style="font-size: 1.1rem;">${agentCard.name}</strong>
+            <p style="color: var(--text-muted); margin-top: 0.25rem;">${agentCard.description}</p>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>Agent ID:</strong> <code>${agentCard.agentId}</code>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>Protocol Versions:</strong> ${agentCard.protocolVersions.join(', ')}
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <strong>Capabilities:</strong><br>
+            ${Object.entries(agentCard.capabilities || {}).map(([k, v]) =>
+              v ? '<span class="capability">' + k + '</span>' : ''
+            ).join('')}
+          </div>
+          <div>
+            <strong>Skills:</strong> ${agentCard.skills?.length || 0} available
+          </div>
+        `;
+      } catch (error) {
+        setStatus('error', 'Discovery failed');
+        setConnectionStatus(false, 'Connection failed');
+        addTimelineEvent('error', 'Failed to discover agent: ' + error.message);
+      }
+    }
+
+    // Select skill
+    function selectSkill(skillId) {
+      currentSkill = skillId;
+
+      // Update button states
+      document.querySelectorAll('.skill-btn').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.querySelector('.skill-name').textContent === skillId) {
+          btn.classList.add('active');
+        }
+      });
+
+      // Show relevant form
+      document.querySelectorAll('.skill-form').forEach(form => {
+        form.classList.add('hidden');
+      });
+      const form = document.getElementById('form-' + skillId);
+      if (form) {
+        form.classList.remove('hidden');
+      }
+
+      // Update title
+      document.getElementById('skillFormTitle').textContent = skillId;
+
+      // Update request preview
+      updateRequestPreview();
+    }
+
+    // Update request preview
+    function updateRequestPreview() {
+      if (!currentSkill) return;
+
+      const params = buildParams();
+      const request = {
+        jsonrpc: '2.0',
+        method: 'message/send',
+        params: {
+          message: {
+            role: 'user',
+            parts: [{
+              type: 'data',
+              data: {
+                skillId: currentSkill,
+                ...params
+              }
+            }]
+          }
+        },
+        id: 'demo-' + requestId
+      };
+
+      document.getElementById('requestPanel').innerHTML = highlightJson(request);
+    }
+
+    // Build params based on current skill
+    function buildParams() {
+      const params = {};
+
+      switch (currentSkill) {
+        case 'interview.request':
+          const email = document.getElementById('candidateEmail').value.trim();
+          const name = document.getElementById('candidateName').value.trim();
+          const skills = document.getElementById('skillsToAssess').value.trim();
+          const duration = document.getElementById('expectedDurationMinutes').value.trim();
+          const sections = document.getElementById('maxSections').value.trim();
+          const level = document.getElementById('assessmentLevel').value;
+          const jobTitle = document.getElementById('jobTitle').value.trim();
+          const extRef = document.getElementById('externalReferenceId').value.trim();
+
+          if (email) params.candidateEmail = email;
+          if (name) params.candidateName = name;
+          if (skills) params.skillsToAssess = skills.split(',').map(s => s.trim());
+          // Backend expects these exact field names:
+          // expectedDurationMinutes -> mcp_interview.expectedDurationMinutes
+          // maxSections -> mcp_interview.maxSections
+          if (duration) params.expectedDurationMinutes = parseInt(duration, 10);
+          if (sections) params.maxSections = parseInt(sections, 10);
+          if (level) params.assessmentLevel = level;
+          if (jobTitle) params.jobTitle = jobTitle;
+          if (extRef) params.externalReferenceId = extRef;
+          break;
+
+        case 'interview.status':
+          const statusId = document.getElementById('statusInterviewId').value.trim();
+          if (statusId) params.interviewId = statusId;
+          break;
+
+        case 'interview.results':
+          const resultsId = document.getElementById('resultsInterviewId').value.trim();
+          if (resultsId) params.interviewId = resultsId;
+          break;
+
+        case 'interview.list':
+          const listStatus = document.getElementById('listStatus').value;
+          const listLimit = document.getElementById('listLimit').value;
+          if (listStatus) params.status = [listStatus];
+          if (listLimit) params.limit = parseInt(listLimit);
+          break;
+
+        case 'interview.cancel':
+          const cancelId = document.getElementById('cancelInterviewId').value.trim();
+          const cancelReason = document.getElementById('cancelReason').value.trim();
+          if (cancelId) params.interviewId = cancelId;
+          if (cancelReason) params.reason = cancelReason;
+          break;
+      }
+
+      return params;
+    }
+
+    // Execute skill
+    async function executeSkill() {
+      const baseUrl = document.getElementById('baseUrl').value.trim();
+      const apiKey = document.getElementById('apiKey').value.trim();
+
+      if (!baseUrl) {
+        alert('Please enter a base URL');
+        return;
+      }
+
+      if (!apiKey) {
+        alert('Please enter an API key');
+        return;
+      }
+
+      if (!currentSkill) {
+        alert('Please select a skill');
+        return;
+      }
+
+      const params = buildParams();
+      const request = {
+        jsonrpc: '2.0',
+        method: 'message/send',
+        params: {
+          message: {
+            role: 'user',
+            parts: [{
+              type: 'data',
+              data: {
+                skillId: currentSkill,
+                ...params
+              }
+            }]
+          }
+        },
+        id: 'demo-' + requestId++
+      };
+
+      // Update request panel
+      document.getElementById('requestPanel').innerHTML = highlightJson(request);
+
+      // Animate arrows
+      document.getElementById('requestArrow').classList.add('active');
+
+      setStatus('loading', 'Executing ' + currentSkill + '...');
+      addTimelineEvent('request', 'Executing skill: ' + currentSkill);
+
+      try {
+        const response = await fetch(baseUrl + '/api/a2a/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + apiKey
+          },
+          body: JSON.stringify(request)
+        });
+
+        const data = await response.json();
+
+        // Animate response arrow
+        setTimeout(() => {
+          document.getElementById('requestArrow').classList.remove('active');
+          document.getElementById('responseArrow').classList.add('active');
+          setTimeout(() => {
+            document.getElementById('responseArrow').classList.remove('active');
+          }, 1000);
+        }, 500);
+
+        // Update response panel
+        document.getElementById('responsePanel').innerHTML = highlightJson(data);
+        document.getElementById('responseStatus').textContent = response.ok ? 'SUCCESS' : 'ERROR';
+        document.getElementById('responseStatus').className = 'method-badge ' + (response.ok ? 'get' : 'post');
+
+        if (data.error) {
+          setStatus('error', 'Request failed');
+          addTimelineEvent('error', 'Error: ' + data.error.message);
+        } else {
+          setStatus('success', 'Request completed');
+
+          // Extract meaningful info from response
+          let resultInfo = 'Request completed successfully';
+          if (data.result?.task?.state) {
+            resultInfo = 'Task state: ' + data.result.task.state;
+          }
+          addTimelineEvent('response', resultInfo);
+        }
+      } catch (error) {
+        document.getElementById('requestArrow').classList.remove('active');
+        setStatus('error', 'Request failed');
+        document.getElementById('responsePanel').innerHTML = highlightJson({ error: error.message });
+        document.getElementById('responseStatus').textContent = 'ERROR';
+        document.getElementById('responseStatus').className = 'method-badge post';
+        addTimelineEvent('error', 'Network error: ' + error.message);
+      }
+    }
+
+    // Tab switching
+    function showTab(tabId) {
+      document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+      document.querySelectorAll('[id$="Tab"]').forEach(el => el.classList.add('hidden'));
+
+      document.getElementById(tabId + 'Tab').classList.remove('hidden');
+      event.target.classList.add('active');
+    }
+
+    // Add input listeners for live preview
+    document.querySelectorAll('input, select').forEach(input => {
+      input.addEventListener('input', updateRequestPreview);
+    });
+
+    // Select first skill by default
+    selectSkill('interview.request');
+  </script>
+</body>
+</html>

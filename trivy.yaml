@@ -1,0 +1,22 @@
+scanners:
+  - vuln
+  - license
+  - config
+  - secret
+  - rbac
+  - sbom
+
+scan:
+  skip-dirs:
+    - .git
+    - node_modules
+
+  skip-files:
+    - ".env"
+
+  severity:
+    - CRITICAL
+    - HIGH
+    - MEDIUM
+
+  ignoreUnfixed: false

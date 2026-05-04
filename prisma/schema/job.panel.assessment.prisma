@@ -1,0 +1,190 @@
+// Panel Assessment Models
+enum job_panel_assessment_status {
+  NOT_STARTED
+  INVITATION_SENT
+  SLOT_SELECTED
+  MEETING_SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum job_panel_assessment_result {
+  NOT_AVAILABLE
+  PASSED
+  FAILED
+  REQUIRES_REVIEW
+}
+
+enum job_panel_assessment_recommendation {
+  HIGHLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+  REQUIRES_FURTHER_REVIEW
+}
+
+enum job_panel_assessment_invitation_status {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum job_panel_assessment_slot_status {
+  AVAILABLE
+  SELECTED
+  OCCUPIED
+  CANCELLED
+}
+
+enum job_panel_assessment_feedback_decision {
+  HIRE
+  NO_HIRE
+  NEEDS_ANOTHER_ROUND
+}
+
+// Main panel assessment session
+model job_panel_assessment {
+  id               String                               @id @default(uuid())
+  candidate        candidate                            @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId      String
+  jobApplication   job_application                      @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String                               @unique
+  status           job_panel_assessment_status          @default(NOT_STARTED)
+  result           job_panel_assessment_result          @default(NOT_AVAILABLE)
+  recommendation   job_panel_assessment_recommendation?
+
+  scheduledDate DateTime?
+  startedAt     DateTime?
+  completedAt   DateTime?
+  duration      Int?
+
+  // Relations
+  slots      job_panel_assessment_slots[]
+  invitation job_panel_assessment_invitation?
+  feedback   job_panel_assessment_feedback[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
+  @@index([jobApplicationId])
+  @@index([status])
+  @@index([scheduledDate])
+  @@map("job_panel_assessments")
+}
+
+// Panel assessment invitations sent to candidates
+model job_panel_assessment_invitation {
+  id String @id @default(uuid())
+
+  client            client                @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId          String
+  candidate         candidate             @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId       String
+  panelAssessment   job_panel_assessment? @relation(fields: [panelAssessmentId], references: [id])
+  panelAssessmentId String?               @unique
+
+  invitedBy   client_user                            @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedById String
+  status      job_panel_assessment_invitation_status @default(PENDING)
+  message     String?                                @db.Text
+
+  // Panel member emails (can be internal users or external people)
+  panelMemberEmails String[] @default([])
+  panelMemberNames  String[] @default([])
+
+  // Calendar/Event details (populated when candidate accepts)
+  useTeams       Boolean @default(true) // Toggle between Teams and external platform
+  eventId        String? // Teams/Calendar event ID or external platform event ID
+  eventLink      String? // Teams meeting link or external platform meeting link
+  selectedSlotId String? // Selected slot ID when accepted
+
+  expiresAt   DateTime
+  respondedAt DateTime?
+  acceptedAt  DateTime? // When candidate accepted
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([candidateId])
+  @@index([panelAssessmentId])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([selectedSlotId])
+  @@map("job_panel_assessment_invitations")
+}
+
+// Available time slots for panel interviews
+model job_panel_assessment_slots {
+  id String @id @default(uuid())
+
+  client            client               @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId          String
+  panelAssessment   job_panel_assessment @relation(fields: [panelAssessmentId], references: [id], onDelete: Cascade)
+  panelAssessmentId String
+
+  createdBy   client_user @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById String
+
+  startDateTime DateTime
+  endDateTime   DateTime
+  timeZone      String                           @default("UTC")
+  status        job_panel_assessment_slot_status @default(AVAILABLE)
+  isSelected    Boolean                          @default(false)
+
+  // Panel member information
+  panelMemberEmails String[] @default([])
+  panelMemberNames  String[] @default([])
+  hostEmail         String // Primary host for the meeting
+  hostName          String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([panelAssessmentId])
+  @@index([status])
+  @@index([isSelected])
+  @@index([startDateTime])
+  @@index([endDateTime])
+  @@map("job_panel_assessment_slots")
+}
+
+// Feedback from panel members post-interview
+model job_panel_assessment_feedback {
+  id String @id @default(uuid())
+
+  panelAssessment   job_panel_assessment @relation(fields: [panelAssessmentId], references: [id], onDelete: Cascade)
+  panelAssessmentId String
+
+  panelMemberEmail String
+  panelMemberName  String
+
+  detailedFeedback String @db.Text
+
+  // Decision and recommendation
+  decision       job_panel_assessment_feedback_decision
+  recommendation job_panel_assessment_recommendation
+
+  isSubmitted Boolean   @default(false)
+  submittedAt DateTime?
+
+  // Feedback form completion tracking
+  feedbackToken String? @unique // Token for anonymous feedback access
+  feedbackLink  String? // Direct link to feedback form
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([panelAssessmentId])
+  @@index([panelMemberEmail])
+  @@index([decision])
+  @@index([isSubmitted])
+  @@index([submittedAt])
+  @@index([feedbackToken])
+  @@map("job_panel_assessment_feedback")
+}

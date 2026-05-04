@@ -1,0 +1,28 @@
+enum feedback_email_task_cron_status {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+enum feedback_email_task_type {
+  FEEDBACK_REQUEST
+  FEEDBACK_REMINDER
+  PANEL_ASSESSMENT_STATUS_UPDATE
+}
+
+model feedback_email_task_cron {
+  id              String                          @id @default(uuid())
+  type            feedback_email_task_type
+  status          feedback_email_task_cron_status @default(PENDING)
+  totalRecipients Int                             @default(0)
+  emailsSent      Int                             @default(0)
+  failedEmails    Int                             @default(0)
+  startedAt       DateTime?
+  completedAt     DateTime?
+  error           String?
+  createdAt       DateTime                        @default(now())
+  updatedAt       DateTime                        @updatedAt
+
+  @@map("feedback_email_task_crons")
+}

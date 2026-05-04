@@ -1,0 +1,21 @@
+enum job_ai_assessment_task_status {
+  PENDING
+  INITIALIZE_STARTED
+  INITIALIZE_COMPLETED
+  ASSESSMENT_STARTED
+  ASSESSMENT_COMPLETED
+  COMPLETED
+  FAILED
+}
+
+model job_ai_assessment_task {
+  id           String                        @id @default(uuid())
+  assessment   job_ai_assessment             @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                        @unique
+  status       job_ai_assessment_task_status @default(PENDING)
+  error        String?
+  createdAt    DateTime                      @default(now())
+  updatedAt    DateTime                      @updatedAt
+
+  @@map("job_ai_assessment_task")
+}

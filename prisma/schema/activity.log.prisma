@@ -1,0 +1,19 @@
+model activity_log {
+  id          String   @id @default(uuid())
+  userId      String
+  user        user     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  module      String // E.g., "candidate", "job", "auth"
+  action      String // E.g., "LOGIN", "CREATE_JOB", "UPDATE_PROFILE"
+  entityId    String? // UUID of affected entity, if any
+  entityType  String? // Optional: "candidate", "job_posting", etc.
+  description String // Human-readable description
+  metadata    Json? // Any additional data
+  ipAddress   String?
+  userAgent   String?
+  timestamp   DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId, module, action, timestamp])
+  @@map("activity_logs")
+}

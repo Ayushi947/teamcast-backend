@@ -1,0 +1,511 @@
+// ========================================
+// SUPPORT TICKET ENUMS
+// ========================================
+
+// Support ticket type classification
+enum support_ticket_type {
+  NEW_ENTITY
+  EXISTING_ENTITY
+  FEATURE_REQUEST
+  BUG_REPORT
+  TECHNICAL_ISSUE
+  BILLING_INQUIRY
+  ACCOUNT_ISSUE
+  GENERAL_INQUIRY
+}
+
+// Support ticket status lifecycle
+enum support_ticket_status {
+  NEW
+  OPEN
+  IN_PROGRESS
+  PENDING
+  RESOLVED
+  CLOSED
+  CANCELLED
+  REOPENED
+}
+
+// Support ticket assignment status
+enum support_ticket_assignment_status {
+  UNASSIGNED
+  ASSIGNED
+  REASSIGNED
+  ESCALATED
+  AUTO_ASSIGNED
+}
+
+// Support ticket priority levels
+enum support_ticket_priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+  CRITICAL
+}
+
+// Entity types that can create support tickets
+enum support_ticket_entity_type {
+  CANDIDATE
+  CLIENT
+  PARTNER
+  SUPPORT
+}
+
+// Support ticket escalation reason
+enum support_ticket_escalation_reason {
+  SLA_BREACH
+  CUSTOMER_REQUEST
+  TECHNICAL_COMPLEXITY
+  BILLING_DISPUTE
+  SECURITY_CONCERN
+  MANAGER_REVIEW
+  OTHER
+}
+
+// ========================================
+// SUPPORT TICKET
+// ========================================
+
+model support_ticket {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Basic Ticket Information
+  title            String
+  description      String                           @db.Text
+  ticketType       support_ticket_type
+  category         String
+  subCategory      String? // Subcategory for better organization
+  status           support_ticket_status            @default(NEW)
+  assignmentStatus support_ticket_assignment_status @default(UNASSIGNED)
+  priority         support_ticket_priority          @default(MEDIUM)
+
+  // Ticket Number System
+  ticketNumber       String  @unique // Human-readable ticket number (e.g., "TCKT-2024-001234")
+  sequenceNumber     Int     @unique // Sequential auto-incrementing number
+  displayNumber      String? // Custom display format (e.g., "TC-TECH-001234")
+  publicTicketNumber String? // Public-facing ticket number (may be different from internal)
+
+  // Entity and Target Information
+  entityType support_ticket_entity_type
+  targetId   String
+  targetType String? // Subcategory for better organization
+
+  // Assignment and Ownership
+  createdById    String
+  authorUserId   String? // Additional author user ID for better tracking
+  assignedUserId String? // support user (optional)
+  assignmentNote String? // Note explaining why ticket was assigned/reassigned
+  createdBy      user          @relation("RaisedTickets", fields: [createdById], references: [id], onDelete: Cascade)
+  authorUser     user?         @relation("AuthoredTickets", fields: [authorUserId], references: [id], onDelete: SetNull)
+  assignedTo     support_user? @relation("AssignedTickets", fields: [assignedUserId], references: [id])
+
+  // SLA Management
+  slaPolicyId  String?
+  slaPolicy    support_sla_policy? @relation("SLA_Tickets", fields: [slaPolicyId], references: [id])
+  slaBreachAt  DateTime? // When SLA will be breached
+  slaDuration  Int? // SLA duration in minutes
+  slaStartedAt DateTime? // When SLA counting started
+  isSlaBreach  Boolean             @default(false)
+
+  // Escalation Management
+  escalatedAt       DateTime?
+  escalatedToUserId String?
+  escalatedToUser   user?                             @relation("EscalatedTo", fields: [escalatedToUserId], references: [id], onDelete: SetNull)
+  escalatedByUserId String?
+  escalatedByUser   user?                             @relation("EscalatedBy", fields: [escalatedByUserId], references: [id], onDelete: SetNull)
+  escalationReason  support_ticket_escalation_reason?
+
+  // Customer Satisfaction
+  customerRating   Int? // 1-5 rating
+  customerFeedback String?   @db.Text
+  customerRatedAt  DateTime?
+
+  // Resolution Information
+  resolutionNotes String?   @db.Text
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  // Root Cause Analysis (RCA)
+  rootCauseAnalysis      String?   @db.Text // Detailed root cause analysis
+  rcaCategory            String? // Category of the root cause (e.g., "Technical", "Process", "Human Error", "System")
+  rcaContributingFactors String[] // Array of contributing factors
+  rcaPreventiveMeasures  String[] // Array of preventive measures to avoid recurrence
+  rcaCompletedAt         DateTime? // When RCA was completed
+  rcaCompletedBy         String? // ID of the user who completed the RCA
+  rcaCompletedByUser     user?     @relation("RcaCompletedBy", fields: [rcaCompletedBy], references: [id], onDelete: SetNull)
+
+  // Additional Metadata
+  tags              String[]
+  dueDate           DateTime?
+  isBacklog         Boolean   @default(false)
+  inlineAttachments Json? // e.g. [{fileName, fileUrl, size, mimeType}] - for simple inline attachments
+  attachmentIds     String[] // Document IDs from document service
+  // Timestamps
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  auditLogs        support_ticket_audit_log[]
+  chatConversation support_chat_conversation?
+  attachments      support_ticket_attachment[]
+  comments         support_ticket_comment[]
+
+  //soft delete
+  deletedAt DateTime?
+  isDeleted Boolean   @default(false)
+
+  // Indexes for Performance
+  @@index([entityType, targetId])
+  @@index([targetType, targetId])
+  @@index([status, priority])
+  @@index([assignmentStatus])
+  @@index([status, assignmentStatus])
+  @@index([createdById])
+  @@index([assignedUserId])
+  @@index([createdAt])
+  @@index([status, createdAt])
+  @@index([priority, createdAt])
+  @@index([slaBreachAt])
+  @@index([dueDate])
+  @@index([ticketNumber])
+  @@index([sequenceNumber])
+  @@index([displayNumber])
+  @@index([publicTicketNumber])
+  @@map("support_tickets")
+}
+
+// ========================================
+// SUPPORT TICKET AUDIT LOG
+// ========================================
+
+model support_ticket_audit_log {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Relations
+  ticket   support_ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String
+
+  // Audit Action Information
+  action     String // "create", "update", "delete", "assign", "status_change", "priority_change", "resolve", "close", "escalate", "reopen"
+  entityType String? // "ticket", "comment", "attachment", "assignment", "escalation"
+  entityId   String?
+
+  // Change Details
+  fieldChanged String? // Field that was changed
+  oldValue     String? // Previous value (for simple fields)
+  newValue     String? // New value (for simple fields)
+  oldData      Json? // Previous state of the ticket/entity (for complex objects)
+  newData      Json? // New state of the ticket/entity (for complex objects)
+
+  // Context and Metadata
+  reason   String? // Reason for the change
+  metadata Json? // Additional change context (browser info, user agent, etc.)
+  details  Json? // Legacy field for backward compatibility
+
+  // User and Session Tracking
+  performedBy   user?   @relation("PerformedBy", fields: [performedById], references: [id], onDelete: SetNull)
+  performedById String?
+  sessionId     String? // Session identifier for tracking
+  userAgent     String? // Browser/client information
+
+  // isPrivate
+  isPrivate Boolean @default(false)
+
+  // Timestamp
+  createdAt DateTime @default(now())
+
+  // Performance Indexes
+  @@index([ticketId])
+  @@index([action])
+  @@index([entityType])
+  @@index([performedById])
+  @@index([createdAt])
+  @@index([action, createdAt])
+  @@map("support_ticket_audit_logs")
+}
+
+// ========================================
+// SUPPORT CHAT CONVERSATION
+// ========================================
+
+model support_chat_conversation {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Relations
+  ticket   support_ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String         @unique
+
+  // Participants
+  userId        String // The user who created the ticket
+  supportUserId String? // The assigned support user
+  user          user          @relation("UserChatConversations", fields: [userId], references: [id], onDelete: Cascade)
+  supportUser   support_user? @relation("SupportChatConversations", fields: [supportUserId], references: [id])
+
+  // Conversation State
+  isActive   Boolean @default(true)
+  isArchived Boolean @default(false)
+  isMuted    Boolean @default(false)
+
+  // Message Tracking
+  lastMessageAt DateTime?
+  lastMessageId String?
+  messageCount  Int       @default(0)
+  unreadCount   Int       @default(0) // Unread messages for each participant
+
+  // Conversation Metadata
+  subject  String? // Optional conversation subject
+  tags     String[] // Conversation tags
+  priority support_ticket_priority? // Inherited from ticket or overridden
+  isUrgent Boolean                  @default(false) // Urgent conversation flag
+
+  // Timestamps
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  endedAt    DateTime?
+  archivedAt DateTime?
+
+  // Performance Indexes
+  @@index([ticketId])
+  @@index([userId])
+  @@index([supportUserId])
+  @@index([isActive])
+  @@index([isArchived])
+  @@index([lastMessageAt])
+  @@index([priority])
+  @@index([isUrgent])
+  @@map("support_chat_conversations")
+}
+
+model support_sla_policy {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Policy Information
+  name        String
+  description String?                    @db.Text
+  entityType  support_ticket_entity_type
+  category    String
+  priority    support_ticket_priority
+
+  // SLA Timeframes (in minutes)
+  responseTime   Int // Time to first response
+  resolutionTime Int // Time to resolution
+  escalationTime Int? // Time before escalation
+
+  // Business Rules
+  businessHoursOnly Boolean @default(false)
+  workingDaysOnly   Boolean @default(false) // Exclude weekends
+  excludeHolidays   Boolean @default(true) // Exclude public holidays
+
+  // Policy State
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false) // Default policy for entity type/category/priority
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  tickets support_ticket[] @relation("SLA_Tickets")
+
+  // Constraints and Indexes
+  @@unique([entityType, category, priority])
+  @@index([entityType, category, priority])
+  @@index([isActive])
+  @@index([isDefault])
+  @@map("support_sla_policies")
+}
+
+// Support ticket configuration for different modules/contexts
+model support_ticket_configuration {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Configuration Information
+  name        String                     @unique // e.g., "client_tickets", "candidate_tickets"
+  description String?                    @db.Text
+  entityType  support_ticket_entity_type // Which entity type this config applies to
+
+  // SLA Configurations (in hours)
+  firstResponseSlaHours Int  @default(24) // Hours for first response
+  resolutionSlaHours    Int  @default(72) // Hours for resolution
+  escalationSlaHours    Int? // Hours before auto-escalation
+
+  // Auto-Assignment Rules
+  autoAssignmentEnabled Boolean @default(false)
+  defaultAssigneeId     String? // Default assignee for this configuration
+  assignmentRules       Json? // Complex assignment rules (round-robin, skill-based, etc.)
+
+  // Escalation Rules
+  autoEscalationEnabled    Boolean @default(false)
+  escalationThresholdHours Int     @default(48)
+  escalationTargetId       String? // Who to escalate to
+  escalationConditions     Json? // Conditions for escalation
+
+  // Notification Settings
+  notifyOnCreate       Boolean @default(true)
+  notifyOnUpdate       Boolean @default(true)
+  notifyOnStatusChange Boolean @default(true)
+  notifyOnAssignment   Boolean @default(true)
+  notifyOnEscalation   Boolean @default(true)
+
+  // Allowed Categories and Types
+  allowedCategories Json? // Array of allowed categories
+  allowedTypes      Json? // Array of allowed types
+  allowedPriorities Json? // Array of allowed priorities
+
+  // Custom Fields Configuration
+  customFieldsSchema Json? // JSON schema for custom fields
+  requiredFields     Json? // Array of required field names
+
+  // Business Rules
+  businessHoursOnly Boolean @default(false)
+  workingDaysOnly   Boolean @default(false)
+  excludeHolidays   Boolean @default(true)
+
+  // Configuration State
+  isActive  Boolean @default(true)
+  isDefault Boolean @default(false) // Default configuration for entity type
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Performance Indexes
+  @@index([entityType])
+  @@index([isActive])
+  @@index([isDefault])
+  @@map("support_ticket_configurations")
+}
+
+// ========================================
+// SUPPORT TICKET ATTACHMENT
+// ========================================
+// This model handles attachments for both tickets and comments
+// An attachment can be linked to either a ticket OR a comment, but not both
+
+model support_ticket_attachment {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Relations - Either ticket OR comment, not both
+  ticket       support_ticket?         @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId     String?
+  comment      support_ticket_comment? @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  commentId    String?
+  uploadedBy   user?                   @relation(fields: [uploadedById], references: [id], onDelete: SetNull)
+  uploadedById String?
+
+  // File Information
+  fileName     String
+  originalName String
+  filePath     String
+  fileSize     Int
+  mimeType     String
+  fileHash     String? // SHA-256 hash for duplicate detection
+  checksum     String? // MD5 checksum for integrity verification
+
+  // File Metadata
+  isPublic    Boolean  @default(false) // Visible to customer
+  isInternal  Boolean  @default(false) // Internal-only attachment
+  description String?  @db.Text
+  tags        String[] // File tags for categorization
+
+  // Security and Access
+  isEncrypted Boolean   @default(false) // Whether file is encrypted
+  accessLevel String? // Access level (public, internal, restricted)
+  expiresAt   DateTime? // File expiration date
+
+  // File Processing
+  isProcessed      Boolean   @default(false) // Whether file has been processed
+  processedAt      DateTime?
+  processingStatus String? // Processing status (pending, completed, failed)
+  processingError  String? // Error message if processing failed
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Performance Indexes
+  @@index([ticketId])
+  @@index([commentId])
+  @@index([uploadedById])
+  @@index([mimeType])
+  @@index([isPublic])
+  @@index([isInternal])
+  @@index([createdAt])
+  @@index([expiresAt])
+  @@index([fileHash])
+  @@map("support_ticket_attachments")
+}
+
+// ============================================================================
+// COMMENTS AND ATTACHMENTS
+// ============================================================================
+
+// Support ticket comments for communication
+model support_ticket_comment {
+  // Primary Key
+  id String @id @default(uuid())
+
+  // Relations
+  ticket   support_ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticketId String
+
+  // Comment Content
+  content    String  @db.Text
+  isInternal Boolean @default(false) // Internal comments not visible to customer
+  isSystem   Boolean @default(false) // System-generated comments
+
+  // Author Information
+  author   user?   @relation("SupportTicketComments", fields: [authorId], references: [id], onDelete: SetNull)
+  authorId String?
+
+  // Mention Information
+  mentionedUserIds String[] // Array of user IDs mentioned in the comment
+  // Removed mentionedUsers relation - using mentionedUserIds array instead
+
+  // Comment Threading
+  parentComment   support_ticket_comment?  @relation("CommentReplies", fields: [parentCommentId], references: [id])
+  parentCommentId String?
+  replies         support_ticket_comment[] @relation("CommentReplies")
+
+  // Email Integration
+  emailMessageId String? // Track email message ID for threading
+  emailSubject   String? // Email subject for context
+  isFromEmail    Boolean @default(false) // Whether comment came from email
+
+  // Comment Metadata
+  tags        String[] // Comment tags for categorization
+  attachments Json? // Inline attachments: [{fileName, fileUrl, size, mimeType}]
+  metadata    Json? // Additional comment metadata
+
+  // Relations
+  fileAttachments support_ticket_attachment[]
+
+  // Comment State
+  isEdited  Boolean   @default(false)
+  editedAt  DateTime?
+  isDeleted Boolean   @default(false)
+  deletedAt DateTime?
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Performance Indexes
+  @@index([ticketId])
+  @@index([ticketId, createdAt])
+  @@index([authorId])
+  @@index([parentCommentId])
+  @@index([isInternal])
+  @@index([isSystem])
+  @@index([isFromEmail])
+  @@index([createdAt])
+  @@index([isDeleted])
+  @@map("support_ticket_comments")
+}

@@ -1,0 +1,144 @@
+// Tour Guidance System Schema
+// Tracks user tour progress and configurations
+
+enum user_tour_status {
+  NOT_STARTED
+  IN_PROGRESS
+  PAUSED
+  COMPLETED
+  DISMISSED
+
+  @@map("user_tour_status_enum")
+}
+
+enum tour_action {
+  START
+  NEXT_STEP
+  PREVIOUS_STEP
+  SKIP_STEP
+  PAUSE
+  SKIP_TOUR
+  RESUME
+  COMPLETE
+  DISMISS
+  RESET
+
+  @@map("tour_action_enum")
+}
+
+enum tour_step_type {
+  TOOLTIP
+  MODAL
+  HIGHLIGHT
+  OVERLAY
+  BEACON
+
+  @@map("tour_step_type_enum")
+}
+
+enum tour_trigger_type {
+  ON_LOGIN
+  ON_FIRST_VISIT
+  ON_FEATURE_ACCESS
+  MANUAL
+  ON_PAGE_LOAD
+  ON_USER_ACTION
+
+  @@map("tour_trigger_type_enum")
+}
+
+model user_tour_progress {
+  id                  String           @id @default(uuid())
+  userId              String
+  tourId              String
+  tourKey             String // Add tour key for easier querying
+  stepId              String?
+  currentStepIndex    Int              @default(0) // Track current step position
+  status              user_tour_status @default(NOT_STARTED)
+  isCompleted         Boolean          @default(false)
+  isPaused            Boolean          @default(false)
+  isDismissed         Boolean          @default(false) // Track if user dismissed tour
+  dismissCount        Int              @default(0) // Track how many times user dismissed
+  completedSteps      Json? // Array of completed step IDs
+  skippedSteps        Json? // Array of skipped step IDs
+  tourSettings        Json? // User-specific tour preferences
+  currentPage         String? // Track current page where tour is active
+  lastStepCompletedAt DateTime? // Track when last step was completed
+  startedAt           DateTime?
+  completedAt         DateTime?
+  pausedAt            DateTime? // Track when tour was paused
+  resumedAt           DateTime? // Track when tour was resumed
+  lastActiveAt        DateTime         @default(now())
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  // Relations
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@unique([userId, tourId])
+  @@unique([userId, tourKey]) // Allow querying by tour key
+  @@index([userId, status])
+  @@index([tourId, status])
+  @@index([tourKey, status])
+  @@index([currentPage])
+  @@map("user_tour_progress")
+}
+
+model tour_definition {
+  id          String     @id @default(uuid())
+  tourKey     String     @unique // e.g., "candidate_onboarding", "client_first_job"
+  name        String
+  description String?
+  userType    user_type
+  userRole    user_role?
+  isActive    Boolean    @default(true)
+  priority    Int        @default(0) // Higher number = higher priority
+  version     String     @default("1.0.0")
+
+  // Tour Configuration
+  triggerConditions Json // Conditions to show the tour
+  tourSteps         Json // Array of tour step definitions
+  tourSettings      Json? // Default settings for the tour
+
+  // Page-specific settings
+  pagePattern String? // URL pattern where this tour should be shown
+  targetPages Json? // Array of specific pages where tour applies
+
+  // Auto-start settings
+  autoStart           Boolean @default(false) // Should tour start automatically
+  restartOnPageChange Boolean @default(false) // Restart tour when page changes
+
+  // Tour grouping for skip/dismiss behavior
+  tourGroup String? // Group identifier - when one tour is skipped/dismissed, all tours in the same group are also skipped/dismissed
+
+  // Metadata
+  createdBy String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([isActive, priority])
+  @@index([userType, isActive])
+  @@index([tourKey, isActive])
+  @@index([tourGroup, isActive])
+  @@map("tour_definitions")
+}
+
+model tour_analytics {
+  id        String      @id @default(uuid())
+  userId    String
+  tourId    String
+  stepId    String
+  action    tour_action // STARTED, COMPLETED, SKIPPED, DISMISSED, PAUSED, RESUMED
+  metadata  Json? // Additional tracking data
+  timestamp DateTime    @default(now())
+
+  // Relations
+  user user @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Indexes
+  @@index([userId, tourId])
+  @@index([tourId, action])
+  @@index([timestamp])
+  @@map("tour_analytics")
+}

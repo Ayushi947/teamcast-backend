@@ -1,0 +1,67 @@
+// Job Recommendation will have the recommended candidates for the job posting
+model job_posting_recommendation {
+  id           String      @id @default(uuid())
+  jobPosting   job_posting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String
+  candidate    candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId  String
+
+  score       Float // Match score between 0-1
+  matchReason String[] // Reasons for the match
+  isViewed    Boolean  @default(false)
+  isSaved     Boolean  @default(false)
+  isInvited   Boolean  @default(false)
+
+  feedback   job_recommendation_feedback?
+  feedbackId String?                      @unique
+
+  // Status
+  status job_recommendation_status @default(ACTIVE)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([jobPostingId, candidateId])
+  @@index([jobPostingId])
+  @@index([candidateId])
+  @@index([score])
+  @@map("job_posting_recommendations")
+}
+
+enum job_recommendation_status {
+  ACTIVE
+  REJECTED
+  WITHDRAWN
+}
+
+enum job_recommendation_feedback_type {
+  LIKE
+  DISLIKE
+  NOT_INTERESTED
+  ALREADY_INVITED
+  NOT_RELEVANT
+  RELEVANT
+  IRRELEVANT
+  TOO_JUNIOR
+  TOO_SENIOR
+  LOCATION_MISMATCH
+  SALARY_MISMATCH
+  SKILL_MISMATCH
+  OTHER
+}
+
+model job_recommendation_feedback {
+  id                  String                     @id @default(uuid())
+  jobRecommendation   job_posting_recommendation @relation(fields: [jobRecommendationId], references: [id], onDelete: Cascade)
+  jobRecommendationId String                     @unique
+
+  type      job_recommendation_feedback_type @default(OTHER)
+  comment   String?
+  isHelpful Boolean                          @default(false)
+  reason    String? // Additional context for the feedback
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("job_recommendation_feedback")
+}

@@ -1,0 +1,102 @@
+// Feature Flag System for dynamic feature enabling/disabling
+model feature_flag {
+  id String @id @default(uuid())
+
+  // Feature identification (key is unique per scope: global or per clientId)
+  key         String // Unique identifier (e.g., "FACE_DETECTION_ENABLED", "TOUR_GUIDE_ENABLED")
+  name        String // Display name
+  description String? // Description of the feature
+
+  // Feature status
+  enabled Boolean @default(false) // Whether the feature is enabled
+
+  // Feature categorization
+  category feature_flag_category @default(SYSTEM) // Category of the feature
+
+  // Target audience (null = all users)
+  targetUserType user_type? // Specific user type (CANDIDATE, CLIENT, SUPPORT, PARTNER)
+  targetUserRole user_role? // Specific user role
+
+  // Client-specific override (null = applies to all clients)
+  clientId String?
+  client   client? @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  // Rollout configuration
+  rolloutPercentage Int @default(100) // Percentage of users to enable (0-100)
+
+  // Feature metadata
+  metadata Json? // Additional configuration data
+
+  // Audit fields
+  createdBy String? // User ID who created this flag
+  updatedBy String? // User ID who last updated this flag
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  schedules feature_flag_schedule[]
+
+  @@unique([key, clientId])
+  @@index([key])
+  @@index([enabled])
+  @@index([category])
+  @@index([clientId])
+  @@map("feature_flags")
+}
+
+// Feature flag categories
+enum feature_flag_category {
+  SYSTEM // System-level features
+  ASSESSMENT // Assessment-related features
+  PROCTORING // Proctoring features
+  UI_ENHANCEMENT // UI improvements
+  ANALYTICS // Analytics features
+  INTEGRATION // Third-party integrations
+  EXPERIMENTAL // Experimental features
+  BETA // Beta features
+  DEPRECATED // Features being phased out
+}
+
+// Saved presets: named sets of flag configs to apply to a client (e.g. "Proctoring strict")
+model feature_flag_preset {
+  id          String   @id @default(uuid())
+  name        String // e.g. "Proctoring strict"
+  description String?
+  // Snapshot of flag configs: [{ key, name, description?, enabled, category, targetUserType?, targetUserRole?, rolloutPercentage?, metadata? }]
+  flagConfigs Json // Array of IFeatureFlagPresetItem
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([name])
+  @@map("feature_flag_presets")
+}
+
+// Scheduled feature flag change (enable/disable at a specific time)
+model feature_flag_schedule {
+  id            String                       @id @default(uuid())
+  featureFlagId String
+  featureFlag   feature_flag                 @relation(fields: [featureFlagId], references: [id], onDelete: Cascade)
+  clientId      String? // null = global flag
+  client        client?                      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  scheduledAt   DateTime
+  action        feature_flag_schedule_action // ENABLE or DISABLE
+  status        feature_flag_schedule_status @default(PENDING)
+  createdBy     String?
+  createdAt     DateTime                     @default(now())
+  appliedAt     DateTime?
+
+  @@index([status, scheduledAt])
+  @@index([featureFlagId])
+  @@map("feature_flag_schedules")
+}
+
+enum feature_flag_schedule_action {
+  ENABLE
+  DISABLE
+}
+
+enum feature_flag_schedule_status {
+  PENDING
+  APPLIED
+  CANCELLED
+}

@@ -1,0 +1,73 @@
+// Application Models
+enum application_status {
+  DRAFT
+  INVITED
+  APPLIED
+  REVIEWING
+  SHORTLISTED
+  ASSESSING
+  OFFERED
+  ACCEPTED
+  FAILED
+  REJECTED
+  WITHDRAWN
+  DECLINED
+}
+
+// Enum to track who performed the action on application
+enum application_action_by {
+  CLIENT
+  CANDIDATE
+  PARTNER
+}
+
+model job_application {
+  id           String      @id @default(uuid())
+  candidate    candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId  String
+  jobPosting   job_posting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String
+
+  // Optional partner field - when application is submitted by a partner
+  partner   partner? @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String?
+
+  status         application_status @default(APPLIED)
+  appliedAt      DateTime           @default(now())
+  notes          String?
+  coverLetterUrl String?
+
+  declinedAt    DateTime?
+  declinedBy    application_action_by?
+  declinedById  String?
+  declineReason String?
+
+  acceptedAt     DateTime?
+  acceptedBy     application_action_by?
+  acceptedById   String?
+  acceptanceNote String?
+
+  jobAiAssessmentInvitations job_ai_assessment_invitation[]
+
+  aiAssessment job_ai_assessment?
+
+  // Panel assessment relations
+  panelAssessment job_panel_assessment[]
+
+  // Optional relation to job invite - only exists for invite-based applications
+  jobInvite job_invite? @relation("JobInviteToApplication")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, jobPostingId])
+  @@index([status])
+  @@index([jobPostingId, status])
+  @@index([candidateId, status])
+  @@index([partnerId, status])
+  @@index([declinedBy])
+  @@index([declinedAt])
+  @@index([acceptedBy])
+  @@index([acceptedAt])
+  @@map("job_applications")
+}

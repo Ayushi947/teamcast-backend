@@ -1,0 +1,262 @@
+// Global application settings
+model global_settings {
+  id          String  @id @default(uuid())
+  name        String // Name of this configuration
+  description String? // Description of this configuration
+
+  // Singleton pattern - only one record can have this set to true
+  isSingleton Boolean @unique @default(false)
+
+  // Notification settings
+  defaultNotificationsEnabled Boolean @default(true)
+  defaultEmailNotifications   Boolean @default(true)
+  defaultPushNotifications    Boolean @default(true)
+  defaultSmsNotifications     Boolean @default(false)
+  defaultInAppNotifications   Boolean @default(true)
+
+  // Job and application alerts
+  defaultJobAlerts          Boolean @default(true)
+  defaultCandidateAlerts    Boolean @default(true)
+  defaultApplicationAlerts  Boolean @default(true)
+  defaultApplicationUpdates Boolean @default(true)
+  defaultConsultantAlerts   Boolean @default(true)
+  defaultContractAlerts     Boolean @default(true)
+
+  // UI preferences
+  defaultDarkMode       Boolean     @default(false)
+  defaultLanguage       String      @default("en")
+  defaultTimezone       String      @default("UTC")
+  defaultDateFormat     date_format @default(MM_DD_YYYY)
+  defaultTimeFormat     time_format @default(TWELVE_HOUR)
+  defaultFirstDayOfWeek Int         @default(0) // 0 = Sunday, 1 = Monday
+
+  // Communication preferences
+  defaultCommunicationChannel communication_channel @default(EMAIL)
+
+  // Privacy settings
+  defaultDataSharing            Boolean @default(false)
+  defaultProfileVisibility      Boolean @default(true)
+  defaultActivityTracking       Boolean @default(true)
+  defaultShareDataWithEmployers Boolean @default(true)
+
+  // Regional settings
+  defaultCurrency String @default("USD")
+  defaultCountry  String @default("US")
+
+  // System limits
+  maxFileUploadSize  Int @default(10) // in MB
+  maxFilesPerUpload  Int @default(5)
+  sessionTimeout     Int @default(30) // in minutes
+  maxLoginAttempts   Int @default(5)
+  passwordExpiryDays Int @default(90)
+
+  // Application specific defaults
+  candidateDefaultSettings Json? // Default settings for candidates
+  clientDefaultSettings    Json? // Default settings for clients
+  partnerDefaultSettings   Json? // Default settings for partners
+
+  // Customization
+  customStyles   Json? // Global UI customization options
+  customBranding Json? // Global branding options
+
+  // References to settings that use this global config
+  supportUserSettings support_user_settings[]
+  clientUserSettings  client_user_settings[]
+  partnerUserSettings partner_user_settings[]
+  clientSettings      client_settings[]
+  candidateSettings   candidate_settings[]
+  partnerSettings     partner_settings[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_settings")
+}
+
+// Global settings for onboarding assessments (admin configurable)
+model global_onboarding_assessment_settings {
+  id          String  @id @default(uuid())
+  name        String // Name of this configuration
+  description String? // Description of this configuration
+
+  // Singleton pattern - only one record can have this set to true
+  isSingleton Boolean @unique @default(false)
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+
+  // Max sections and questions per section
+  maxSections            Int @default(6)
+  maxQuestionsPerSection Int @default(8)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(10) // Minimum video length in minutes
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(true) // Auto-publish profile on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect  String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  // Related settings
+  assessmentSettings onboarding_assessment_settings[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_onboarding_assessment_settings")
+}
+
+// Global settings for Job AI assessments (admin configurable)
+model global_job_ai_assessment_settings {
+  id          String  @id @default(uuid())
+  name        String // Name of this configuration
+  description String? // Description of this configuration
+
+  // Singleton pattern - only one record can have this set to true
+  isSingleton Boolean @unique @default(false)
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+  maxAssessmentDuration     Int      @default(7200) // in seconds
+  assessmentBuffer          Int      @default(300) // Buffer time in seconds
+
+  // AI configuration
+  useCustomPrompts Boolean @default(false)
+  aiDifficulty     String  @default("MEDIUM") // EASY, MEDIUM, HARD
+  customPrompts    Json? // Custom prompts for AI assessment
+  skillWeightings  Json? // Weightings for different skills
+
+  // Max sections and questions per section
+  maxSections            Int @default(5)
+  maxQuestionsPerSection Int @default(5)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(300) // Minimum video length in seconds
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(false) // Auto-publish result on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage    String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect     String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  // Related settings
+  clientAiAssessmentSettings client_ai_assessment_settings[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_job_ai_assessment_settings")
+}
+
+// Global settings for Practice assessments (admin configurable)
+model global_practice_assessment_settings {
+  id          String  @id @default(uuid())
+  name        String // Name of this configuration
+  description String? // Description of this configuration
+
+  // Singleton pattern - only one record can have this set to true
+  isSingleton Boolean @unique @default(false)
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+
+  // Max sections and questions per section
+  maxSections            Int @default(3)
+  maxQuestionsPerSection Int @default(5)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(300) // Minimum video length in seconds
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(false) // Auto-publish result on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage    String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect     String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  // Related settings
+  assessmentSettings public_practice_assessment_settings[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("global_practice_assessment_settings")
+}

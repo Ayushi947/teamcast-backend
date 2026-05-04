@@ -1,0 +1,18 @@
+enum daily_stats_cron_task_status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+model daily_stats_cron_task {
+  id           String                       @id @default(uuid())
+  status       daily_stats_cron_task_status @default(PENDING)
+  startedAt    DateTime?
+  completedAt  DateTime?
+  error        String?
+  errorMessage String?
+  createdAt    DateTime                     @default(now())
+  updatedAt    DateTime                     @updatedAt
+}

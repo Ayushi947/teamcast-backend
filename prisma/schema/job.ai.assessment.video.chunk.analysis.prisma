@@ -1,0 +1,30 @@
+// Job AI Assessment Video Chunk Analysis Model
+// Stores per-chunk video analysis results for job AI assessments
+
+model JobAiAssessmentVideoChunkAnalysis {
+  id            String    @id @default(uuid())
+  assessmentId  String    @map("assessment_id")
+  chunkIndex    Int       @map("chunk_index")
+  questionId    String?   @map("question_id") // Track which question this chunk answers
+  sectionId     String?   @map("section_id") // Track which section this chunk belongs to
+  attemptNumber Int       @default(1) @map("attempt_number") // Track restart attempts (1, 2, 3...)
+  gcsUri        String    @map("gcs_uri") // GCS URI for playback (gs://bucket/path)
+  publicUrl     String?   @map("public_url") // Optional signed URL for playback
+  analysis      Json?     // Stores ChunkAnalysis object (null if not yet analyzed)
+  duration      Float?   @map("duration") // Video duration in seconds (extracted from video metadata)
+  status        String    @default("uploaded") @map("status") // uploaded, analyzing, completed, failed
+  isRelevant    Boolean   @default(true) @map("is_relevant") // False if superseded by restart
+  processedAt   DateTime? @map("processed_at")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  
+  @@unique([assessmentId, chunkIndex, sectionId], name: "job_ai_video_chunk_analysis_assessment_id_chunk_index_section_id_key")
+  @@index([assessmentId])
+  @@index([questionId])
+  @@index([sectionId])
+  @@index([status])
+  @@index([assessmentId, questionId, attemptNumber])
+  @@index([assessmentId, sectionId, attemptNumber])
+  @@map("job_ai_assessment_video_chunk_analysis")
+}

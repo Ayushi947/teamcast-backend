@@ -1,0 +1,75 @@
+// Partner Invitation Status
+enum partner_user_invitation_status {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  WITHDRAWN
+}
+
+// Partner User Invitation Model
+model partner_user_invitation {
+  id            String                         @id @default(uuid())
+  partner       partner                        @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId     String
+  email         String
+  name          String
+  jobTitle      String?
+  role          user_role
+  type          user_type                      @default(PARTNER)
+  status        partner_user_invitation_status @default(PENDING)
+  token         String                         @unique
+  expiresAt     DateTime
+  acceptedAt    DateTime?
+  partnerUser   partner_user?                  @relation("PartnerUserInvitation", fields: [partnerUserId], references: [id])
+  partnerUserId String?
+  createdBy     user                           @relation("InvitationCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  createdById   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_user_invitations")
+}
+
+model partner_user {
+  id        String                 @id @default(uuid())
+  partner   partner                @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+  user      user                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String                 @unique
+  settings  partner_user_settings?
+
+  // Added relation for invitations
+  invitations partner_user_invitation[] @relation("PartnerUserInvitation")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_users")
+}
+
+// Partner User Settings Model
+model partner_user_settings {
+  id            String       @id @default(uuid())
+  partnerUser   partner_user @relation(fields: [partnerUserId], references: [id], onDelete: Cascade)
+  partnerUserId String       @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled Boolean @default(true)
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  darkMode             Boolean @default(false)
+  language             String  @default("en")
+  timezone             String  @default("UTC")
+
+  // Using enum instead of string
+  preferredCommunicationChannel communication_channel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_user_settings")
+}

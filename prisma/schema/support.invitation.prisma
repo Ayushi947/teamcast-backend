@@ -1,0 +1,53 @@
+// Support Invitation Type Enum
+enum support_invitation_type {
+  CANDIDATE
+  CLIENT
+  PARTNER
+  SUPPORT_USER
+}
+
+// Support Invitation Status
+enum support_invitation_status {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  WITHDRAWN
+  RESEND
+}
+
+// Support Invitation Model
+model support_invitation {
+  id         String                    @id @default(uuid())
+  email      String
+  name       String
+  jobTitle   String?
+  type       support_invitation_type
+  status     support_invitation_status @default(PENDING)
+  token      String                    @unique
+  expiresAt  DateTime
+  acceptedAt DateTime?
+  isCampaign Boolean                   @default(false) // Flag for Excel upload campaigns
+
+  // Type-specific fields
+  clientId       String?
+  partnerId      String?
+  companyName    String?
+  specialization String?
+  role           user_role?
+  department     support_department?
+  supportLevel   support_level?
+
+  // Relationships
+  candidate        candidate?   @relation("SupportInvitationCandidate", fields: [candidateId], references: [id])
+  candidateId      String?
+  client           client?      @relation("SupportInvitationClient", fields: [clientId], references: [id])
+  partner          partner?     @relation("SupportInvitationPartner", fields: [partnerId], references: [id])
+  createdBy        support_user @relation("SupportInvitationCreator", fields: [createdById], references: [id])
+  createdById      String
+  accountManagerId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("support_invitations")
+}

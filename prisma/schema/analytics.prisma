@@ -1,0 +1,55 @@
+// Market Intelligence
+model market_rate {
+  id              String           @id @default(uuid())
+  skill           String
+  industry        company_industry
+  location        String
+  experienceLevel Int // Years of experience
+  averageSalary   Float
+  salaryCurrency  String           @default("USD")
+  salaryRange     Json // Min, max, median
+  demandLevel     Float // Demand score between 0-1
+  sampleSize      Int // Number of data points
+  timespan        String // e.g., "Q1 2023", "2023"
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([skill])
+  @@index([industry])
+  @@index([location])
+  @@map("market_rates")
+}
+
+model skill_growth_trend {
+  id              String   @id @default(uuid())
+  skill           String
+  growthRate      Float // Percentage growth
+  timespan        String // e.g., "6 months", "1 year"
+  projectedDemand Float // Projected demand score between 0-1
+  industryImpact  Json // Impact scores by industry
+  dataSource      String[] // Sources of the data
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([skill])
+  @@index([growthRate])
+  @@map("skill_growth_trends")
+}
+
+model talent_pool_analytics {
+  id                    String @id @default(uuid())
+  skill                 String
+  candidateCount        Int // Number of candidates with this skill
+  averageExperience     Float // Average years of experience
+  demandSupplyRatio     Float // Ratio of job postings to candidates
+  averageTimeToBeFilled Float // Average days to fill positions
+  topLocations          Json // Top locations with this skill
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([skill])
+  @@map("talent_pool_analytics")
+}

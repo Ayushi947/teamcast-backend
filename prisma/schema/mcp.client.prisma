@@ -1,0 +1,96 @@
+// MCP (Model Context Protocol) Client Model
+// Represents external AI agents that can interact with Teamcast via MCP
+
+model mcp_client {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  // Client identification
+  name        String // Friendly name for the MCP client (e.g., "HR Assistant Agent")
+  description String? // Description of what this client/agent does
+
+  // Authentication
+  apiKey     String @unique // API key for authentication
+  apiKeyHash String? // Optional hash of API key for verification
+
+  // Permissions
+  scopes String[] // Array of permission scopes (e.g., ["jobs:write", "invites:write"])
+
+  // Status
+  isActive Boolean @default(true)
+
+  // Usage tracking
+  lastUsedAt     DateTime?
+  requestCount   Int       @default(0)
+  errorCount     Int       @default(0)
+  lastErrorAt    DateTime?
+  lastErrorMessage String?
+
+  // Rate limiting
+  rateLimitPerMinute Int @default(100)
+  rateLimitPerHour   Int @default(1000)
+
+  // Metadata
+  metadata    Json? // Additional client-specific metadata
+  sourceSystem String? // Name of the source system (e.g., "Claude", "GPT", "Custom Agent")
+  contactEmail String? // Contact email for the agent owner
+
+  // Webhook configuration (optional)
+  webhookUrl     String?
+  webhookSecret  String?
+  webhookEnabled Boolean @default(false)
+
+  // Audit
+  createdById String? // Support or client user who created this
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Activity logs
+  activityLogs mcp_activity_log[]
+
+  // Job invites sent by this MCP client
+  jobInvites job_invite[]
+
+  // MCP interviews requested by this client
+  mcpInterviews mcp_interview[]
+
+  @@index([clientId])
+  @@index([apiKey])
+  @@index([isActive])
+  @@map("mcp_clients")
+}
+
+// MCP Activity Log Model
+// Tracks all MCP operations for auditing and debugging
+model mcp_activity_log {
+  id          String     @id @default(uuid())
+  mcpClient   mcp_client @relation(fields: [mcpClientId], references: [id], onDelete: Cascade)
+  mcpClientId String
+
+  // Request details
+  method      String // JSON-RPC method (e.g., "tools/call")
+  toolName    String? // Tool name if applicable
+  requestId   String? // JSON-RPC request ID
+  requestBody Json? // Request payload (sanitized)
+
+  // Response details
+  responseStatus String // "success" or "error"
+  responseCode   Int? // Error code if applicable
+  errorMessage   String? // Error message if applicable
+
+  // Performance
+  durationMs Int // Request duration in milliseconds
+
+  // Context
+  ipAddress String?
+  userAgent String?
+
+  createdAt DateTime @default(now())
+
+  @@index([mcpClientId])
+  @@index([createdAt])
+  @@index([method])
+  @@index([responseStatus])
+  @@map("mcp_activity_logs")
+}

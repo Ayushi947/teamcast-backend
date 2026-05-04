@@ -1,0 +1,51 @@
+// Job Recommendation Cron Task Models
+enum job_recommendation_cron_task_status {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model job_recommendation_cron_task {
+  id                     String                              @id @default(uuid())
+  status                 job_recommendation_cron_task_status @default(PENDING)
+  totalJobs              Int                                 @default(0)
+  processedJobs          Int                                 @default(0)
+  failedJobs             Int                                 @default(0)
+  recommendationsCreated Int                                 @default(0)
+  error                  String?
+
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  // Relations
+  syncTasks job_recommendation_sync_task[]
+
+  @@map("job_recommendation_cron_tasks")
+}
+
+model job_recommendation_sync_task {
+  id           String                              @id @default(uuid())
+  jobPosting   job_posting                         @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String
+  cronTask     job_recommendation_cron_task        @relation(fields: [cronTaskId], references: [id], onDelete: Cascade)
+  cronTaskId   String
+  status       job_recommendation_cron_task_status @default(PENDING)
+
+  recommendationsCreated Int     @default(0)
+  error                  String?
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([jobPostingId, cronTaskId])
+  @@index([cronTaskId])
+  @@index([status])
+  @@map("job_recommendation_sync_tasks")
+}
+
+// Add missing relation back to job_posting
+// This should be added as a relation field to the job_posting model
+// jobRecommendationSyncTasks job_recommendation_sync_task[] 

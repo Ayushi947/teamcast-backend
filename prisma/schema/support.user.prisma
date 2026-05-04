@@ -1,0 +1,99 @@
+// Support Level Enum
+enum support_level {
+  L1
+  L2
+  L3
+  L4
+}
+
+// Support Department Enum
+enum support_department {
+  TECHNICAL_SUPPORT
+  CUSTOMER_SUCCESS
+  SALES_SUPPORT
+  BILLING_FINANCE
+  OPERATIONS
+}
+
+// Support User Model
+model support_user {
+  id           String              @id @default(uuid())
+  user         user                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId       String              @unique
+  department   support_department?
+  supportLevel support_level?
+
+  settings support_user_settings?
+
+  createdInvitations support_invitation[] @relation("SupportInvitationCreator")
+
+  // Support invitation import relations
+  supportInvitationImports support_invitation_import[] @relation("SupportInvitationImports")
+
+  // Added relation for account manager assignments
+  accountManagerAssignments support_user_account_manager_assignment[] @relation("SupportUserAccountManagerAssignments")
+
+  // Added relation for being an account manager
+  accountManagerFor support_user_account_manager_assignment[] @relation("AccountManagerAssignments")
+
+  // Added relation for client account manager assignments
+  clientAccountManagerAssignments client_account_manager_assignment[] @relation("SupportUserClientAccountManagerAssignments")
+
+  // Added relation for recruiter assignments to job postings
+  recruiterAssignments job_posting_recruiter_assignment[] @relation("RecruiterAssignments")
+
+  // Account manager assignment history relations
+  previousAccountManagerHistory account_manager_assignment_history[] @relation("PreviousAccountManager")
+  newAccountManagerHistory      account_manager_assignment_history[] @relation("NewAccountManager")
+
+  // Job posting assignment history relations
+  previousRecruiterHistory job_posting_assignment_history[] @relation("PreviousRecruiter")
+  newRecruiterHistory      job_posting_assignment_history[] @relation("NewRecruiter")
+  previousAMHistory        job_posting_assignment_history[] @relation("PreviousAM")
+  newAMHistory             job_posting_assignment_history[] @relation("NewAM")
+
+  // Archive relations
+  archivedRecommendations job_posting_recommendation_archive[] @relation("ArchiveRecruiter")
+
+  archivedAsAccountManager job_posting_recommendation_archive[] @relation("ArchiveAccountManager")
+
+  // Support Ticket Relations
+  assignedTickets support_ticket[] @relation("AssignedTickets")
+
+  // Support Chat Relations
+  supportChatConversations support_chat_conversation[] @relation("SupportChatConversations")
+
+  // Account manager availability flag
+  isAvailableForAssignment Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("support_users")
+}
+
+// Support User Settings
+model support_user_settings {
+  id            String       @id @default(uuid())
+  supportUser   support_user @relation(fields: [supportUserId], references: [id], onDelete: Cascade)
+  supportUserId String       @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled Boolean @default(true) // Whether all notifications are enabled
+  emailNotifications   Boolean @default(true) // Email-specific notifications toggle
+  pushNotifications    Boolean @default(true) // Push notification-specific toggle
+  darkMode             Boolean @default(false) // UI theme preference
+  language             String  @default("en") // User interface language
+  timezone             String  @default("UTC") // User's preferred timezone
+
+  // Using enum instead of string
+  preferredCommunicationChannel communication_channel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("support_user_settings")
+}

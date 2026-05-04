@@ -1,0 +1,100 @@
+enum user_type {
+  SUPPORT
+  CANDIDATE
+  CLIENT
+  PARTNER
+}
+
+// User Models
+enum user_role {
+  ADMIN
+  HR
+  RECRUITER
+  ACCOUNTS
+  PARTNER_RESOURCE
+  INDIVIDUAL
+  ACCOUNT_MANAGER
+  TECHNICAL_SUPPORT
+}
+
+enum user_status {
+  ACTIVE
+  INACTIVE
+  BLOCKED
+}
+
+model user {
+  id                   String                    @id @default(uuid())
+  name                 String
+  email                String                    @unique
+  refreshToken         String?
+  type                 user_type                 @default(CANDIDATE)
+  role                 user_role                 @default(INDIVIDUAL)
+  status               user_status               @default(ACTIVE)
+  jobTitle             String?
+  emailVerified        DateTime?
+  otpCode              String?
+  otpExpires           DateTime?
+  passwordResetToken   String?
+  passwordResetExpires DateTime?
+  image                String?
+  createdAt            DateTime                  @default(now())
+  updatedAt            DateTime                  @updatedAt
+  profileSetup         Boolean                   @default(true)
+  password             String?
+  activityLogs         activity_log[]
+  candidate            candidate?
+  clientUser           client_user?
+  invitations          partner_user_invitation[] @relation("InvitationCreator")
+  partnerUser          partner_user?
+  supportUser          support_user?
+  userTourProgress     user_tour_progress[]
+
+  tourAnalytics tour_analytics[]
+
+  // Assignment history changes
+  accountManagerAssignmentChanges account_manager_assignment_history[]
+  jobPostingAssignmentChanges     job_posting_assignment_history[]
+
+  // Candidate import relations
+  candidateImportUploads candidate_import[] @relation("CandidateImportUploads")
+
+  // Support invitation import relations (uploadedBy only)
+  supportInvitationImportUploads support_invitation_import[] @relation("SupportInvitationImportUploads")
+
+  // Support Ticket Relations
+  raisedTickets   support_ticket[] @relation("RaisedTickets")
+  authoredTickets support_ticket[] @relation("AuthoredTickets")
+
+  // Support Chat Relations
+  userChatConversations support_chat_conversation[] @relation("UserChatConversations")
+
+  // Audit log Relations
+  auditLogs support_ticket_audit_log[] @relation("PerformedBy")
+
+  // Escalation Relations
+  escalatedTo support_ticket[] @relation("EscalatedTo")
+  escalatedBy support_ticket[] @relation("EscalatedBy")
+
+  // RCA Relations
+  rcaCompletedTickets support_ticket[] @relation("RcaCompletedBy")
+
+  // Support Ticket Attachment Relations
+  uploadedAttachments support_ticket_attachment[]
+
+  // Support Ticket Comment Relations
+  supportTicketComments support_ticket_comment[] @relation("SupportTicketComments")
+
+  // OAuth Relations
+  oauthAuthorizationCodes oauth_authorization_code[]
+
+  // Job Invite Relations
+  jobInvites job_invite[] @relation("JobInviteToUser")
+
+  // MCP Interview Relations (for external candidates who registered)
+  mcpInterviews mcp_interview[]
+
+  @@index([type, status])
+  @@index([role])
+  @@map("users")
+}

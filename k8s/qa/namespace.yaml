@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: teamcast-qa
+  labels:
+    app: teamcast-backend
+    environment: qa
+    purpose: quality-assurance

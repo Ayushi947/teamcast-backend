@@ -1,0 +1,230 @@
+// Job Models
+enum job_requirement_type {
+  REQUIRED
+  PREFERRED
+  NICE_TO_HAVE
+}
+
+enum job_posting_status {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+enum job_invite_status {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+  EXPIRED
+  WITHDRAWN
+}
+
+model job_posting {
+  id            String           @id @default(uuid())
+  client        client           @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId      String
+  createdBy     client_user      @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdById   String
+  title         String
+  description   String
+  jobType       work_type
+  jobCommitment work_commitment
+  jobSchedule   work_schedule
+  industry      company_industry
+
+  totalExperience      Int
+  department           String?
+  teamSize             Int?
+  reportingTo          String?
+  hiring_manager_email String? // Email of the hiring manager
+  status               job_posting_status @default(DRAFT)
+  applicationDeadline  DateTime?
+  availableFrom        DateTime?
+  numberOfOpenings     Int
+  applicationUrl       String?
+  isFeatured           Boolean            @default(false)
+  numberOfViews        Int                @default(0)
+  numberOfApplications Int                @default(0)
+
+  applications                   job_application[]
+  jobPostingAiAssessmentSettings job_posting_ai_assessment_settings?
+
+  candidateViews candidate_view[] // Add relation to track candidate views in context of a job
+
+  isRemote Boolean @default(false)
+
+  // Job Posting Requirements
+  preferredUniversities String[]
+  preferredDegrees      String[]
+  preferredLocations    String[]
+  preferredIndustries   String[]
+  requiredSkills        String[]
+  preferredSkills       String[]
+
+  // Job Posting Compensation
+  minSalary      Float?
+  maxSalary      Float?
+  salaryCurrency String?
+  equity         Boolean  @default(false)
+  benefits       String[]
+
+  // Job Posting Responsibilities
+  responsibilities String[]
+  tags             String[]
+
+  // Add these relation fields
+  savedByCandidate candidate_saved_job[]
+  recommendations  job_posting_recommendation[]
+
+  // Assignment history
+  assignmentHistory job_posting_assignment_history[]
+
+  // Archived recommendations
+  archivedRecommendations job_posting_recommendation_archive[]
+  recommendedReceived     candidate_recommendation[]
+
+  // Integration relations
+  jobPostingIntegrations job_posting_integration[]
+
+  // Job parsing task relation
+  jobParsingTask job_parsing_task?
+
+  // Shortlist relations
+  candidateShortlists candidate_shortlist[]
+
+  // Job posting assessment relations
+  assessmentTask job_posting_assessment_task?
+  assessments    job_posting_assessment[]
+
+  // Job recommendation cron relations
+  jobRecommendationSyncTasks job_recommendation_sync_task[]
+
+  // Recruiter assignment relations
+  recruiterAssignments job_posting_recruiter_assignment[]
+
+  // Candidate import relations
+  candidateImports candidate_import[] @relation("CandidateImports")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  isPublished Boolean @default(false)
+  isDirty     Boolean @default(true)
+
+  // Recommendations sync tracking
+  recommendationsSync DateTime? @default(now())
+
+  @@index([status])
+  @@index([clientId, status])
+  @@index([industry, status])
+  @@index([isRemote, status])
+  @@index([isFeatured])
+  @@map("job_postings")
+}
+
+// Job-specific job ai assessment settings
+model job_posting_ai_assessment_settings {
+  id           String      @id @default(uuid())
+  jobPosting   job_posting @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId String      @unique
+
+  clientAiAssessmentSettings   client_ai_assessment_settings? @relation(fields: [clientAiAssessmentSettingsId], references: [id])
+  clientAiAssessmentSettingsId String?
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+  maxAssessmentDuration     Int      @default(7200) // in seconds
+  assessmentBuffer          Int      @default(300) // Buffer time in seconds
+
+  // AI configuration
+  useCustomPrompts Boolean @default(false)
+  aiDifficulty     String  @default("MEDIUM") // EASY, MEDIUM, HARD
+  customPrompts    Json? // Custom prompts for AI assessment
+  skillWeightings  Json? // Weightings for different skills
+
+  // Max sections and questions per section
+  maxSections            Int @default(5)
+  maxQuestionsPerSection Int @default(5)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(300) // Minimum video length in seconds
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(false) // Auto-publish result on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage    String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect     String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("job_posting_ai_assessment_settings")
+}
+
+model job_invite {
+  id                  String            @id @default(uuid())
+  email               String
+  name                String // Fallback name for non-registered users
+  jobId               String
+  inviterId           String
+  status              job_invite_status @default(PENDING)
+  expiresAt           DateTime
+  isSupportInvite     Boolean?          @default(false)
+  isImportedCandidate Boolean?          @default(false) // Flag to track imported candidates
+  integrationId       String? // ID of the integration provider used for import
+  isUSBasedJob        Boolean?          @default(false) // Flag to track USA-based job postings
+  userId              String? // Reference to user if they exist
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  // MCP Client tracking - tracks which external AI agent sent this candidate
+  sourceMcpClientId       String? // ID of the MCP client that sent this invite
+  externalCandidateId     String? // External candidate ID from the source system
+  externalBatchId         String? // Batch ID for tracking related invites from same agent
+
+  // Relations
+  integration      integration_provider? @relation(fields: [integrationId], references: [id])
+  jobApplication   job_application?      @relation("JobInviteToApplication", fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String?               @unique // Nullable: can be NULL for invites sent to candidates who don't exist yet. Will be populated when candidate signs up.
+  user             user?                 @relation("JobInviteToUser", fields: [userId], references: [id], onDelete: SetNull)
+  sourceMcpClient  mcp_client?           @relation(fields: [sourceMcpClientId], references: [id], onDelete: SetNull)
+
+  @@unique([jobId, email, isSupportInvite])
+  @@index([email])
+  @@index([jobId])
+  @@index([isImportedCandidate])
+  @@index([integrationId])
+  @@index([isUSBasedJob])
+  @@index([jobApplicationId])
+  @@index([userId])
+  @@index([sourceMcpClientId])
+  @@index([externalCandidateId])
+}

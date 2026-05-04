@@ -1,0 +1,25 @@
+enum lookup_status {
+  ACTIVE
+  INACTIVE
+}
+
+model lookup_category {
+  id           String         @id @default(uuid())
+  name         String         @unique
+  label        String
+  status       lookup_status  @default(ACTIVE)
+  lookupValues lookup_value[]
+
+  @@map("lookup_categories")
+}
+
+model lookup_value {
+  id               String          @id @default(uuid())
+  label            String
+  lookupCategoryId String
+  status           lookup_status   @default(ACTIVE)
+  lookupCategory   lookup_category @relation(fields: [lookupCategoryId], references: [id])
+
+  @@unique([label, lookupCategoryId])
+  @@map("lookup_values")
+}

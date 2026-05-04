@@ -1,0 +1,107 @@
+// Client Invitation Status
+enum client_user_invitation_status {
+  PENDING
+  ACCEPTED
+  EXPIRED
+  WITHDRAWN
+}
+
+// Client Invitation Model
+model client_user_invitation {
+  id           String                        @id @default(uuid())
+  client       client                        @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId     String
+  email        String
+  name         String
+  jobTitle     String?
+  role         user_role
+  status       client_user_invitation_status @default(PENDING)
+  token        String                        @unique
+  expiresAt    DateTime
+  acceptedAt   DateTime?
+  clientUser   client_user?                  @relation("ClientUserInvitation", fields: [clientUserId], references: [id], onDelete: SetNull)
+  clientUserId String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_user_invitations")
+}
+
+model client_user {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+  user     user   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String @unique
+
+  // Added relation for invitations
+  invitations                client_user_invitation[]       @relation("ClientUserInvitation")
+  jobAiAssessmentInvitations job_ai_assessment_invitation[]
+  settings                   client_user_settings?
+  candidateViews             candidate_view[] // Add relation to track candidate views
+  createdJobPostings         job_posting[] // Add relation to track created job postings
+
+  // Panel assessment relations
+  panelAssessmentInvitations job_panel_assessment_invitation[]
+  createdPanelSlots          job_panel_assessment_slots[]
+
+  // Shortlist relations
+  candidateShortlists candidate_shortlist[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_users")
+}
+
+// Client User Settings Model
+model client_user_settings {
+  id           String      @id @default(uuid())
+  clientUser   client_user @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
+  clientUserId String      @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled Boolean @default(true)
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  darkMode             Boolean @default(false)
+  language             String  @default("en")
+  timezone             String  @default("UTC")
+
+  // Using enum instead of string
+  preferredCommunicationChannel communication_channel?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_user_settings")
+}
+
+// Model to track which candidates have been viewed by client users
+model candidate_view {
+  id           String      @id @default(uuid())
+  candidate    candidate   @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId  String
+  clientUser   client_user @relation(fields: [clientUserId], references: [id], onDelete: Cascade)
+  clientUserId String
+  viewedAt     DateTime    @default(now())
+
+  // Optional fields to track additional context
+  jobPosting   job_posting? @relation(fields: [jobPostingId], references: [id], onDelete: SetNull)
+  jobPostingId String?
+  viewContext  String? // Additional context about where/why the candidate was viewed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, clientUserId, jobPostingId])
+  @@index([candidateId])
+  @@index([clientUserId])
+  @@index([viewedAt])
+  @@index([jobPostingId])
+  @@map("candidate_views")
+}

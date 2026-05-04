@@ -1,0 +1,21 @@
+model daily_digest_cron_task {
+  id            String                        @id @default(uuid())
+  status        daily_digest_cron_task_status @default(PENDING)
+  startedAt     DateTime?
+  completedAt   DateTime?
+  error         String?
+  errorMessage  String?
+  clientDigests String? // JSON string of client digest data
+  createdAt     DateTime                      @default(now())
+  updatedAt     DateTime                      @updatedAt
+
+  @@map("daily_digest_cron_tasks")
+}
+
+enum daily_digest_cron_task_status {
+  PENDING
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+  CANCELLED
+}

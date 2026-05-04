@@ -1,0 +1,76 @@
+// Job Posting Assessment
+enum job_posting_assessment_result {
+  NOT_AVAILABLE
+  PASSED
+  AI_REVIEW_FAILED
+  MANUAL_REVIEW_FAILED
+}
+
+enum job_posting_assessment_recommendation {
+  HIGHLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+  NEEDS_IMPROVEMENT
+}
+
+enum job_posting_assessment_status {
+  // Assessment not started
+  NOT_STARTED
+  // AI Review of the assessment
+  AI_REVIEW_IN_PROGRESS
+  AI_REVIEW_COMPLETED
+  // Manual Review of the assessment
+  MANUAL_REVIEW_IN_PROGRESS
+  MANUAL_REVIEW_COMPLETED
+  // Assessment completed
+  ASSESSMENT_COMPLETED
+  // Assessment failed
+  ASSESSMENT_FAILED
+}
+
+model job_posting_assessment {
+  id              String                        @id @default(uuid())
+  jobPostingId    String
+  jobPosting      job_posting                   @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  status          job_posting_assessment_status @default(NOT_STARTED)
+  result          job_posting_assessment_result @default(NOT_AVAILABLE)
+  score           Float                         @default(0)
+  confidenceScore Float                         @default(0)
+  jobPostingText  String                        @db.Text
+
+  // Analysis Results
+  strengths           String[] @default([])
+  areasForImprovement String[] @default([])
+
+  overallFeedback       String?                                @db.Text
+  recommendation        job_posting_assessment_recommendation?
+  jobDescriptionQuality String?                                @db.Text
+  requirementsClarity   String?                                @db.Text
+  compensationAnalysis  String?                                @db.Text
+
+  // Extracted job posting elements
+  identifiedSkills  String[] @default([])
+  requiredSkills    String[] @default([])
+  preferredSkills   String[] @default([])
+  industryRelevance String[] @default([])
+  roleClarity       String[] @default([])
+
+  // Quality metrics
+  titleQuality        Float?
+  descriptionQuality  Float?
+  requirementsQuality Float?
+  compensationQuality Float?
+
+  // Compliance checks
+  complianceIssues    String[] @default([])
+  diversityCompliance Boolean  @default(true)
+  legalCompliance     Boolean  @default(true)
+
+  startedAt   DateTime?
+  completedAt DateTime?
+  task        job_posting_assessment_task?
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@map("job_posting_assessments")
+}

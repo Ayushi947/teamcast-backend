@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: teamcast-config
+  namespace: teamcast
+  labels:
+    app: teamcast-backend
+data:
+  # App URLs
+  frontend-url: 'https://app.teamcast.ai'
+  server-url: 'https://api.teamcast.ai'
+
+  # Redis configuration
+  redis-host: 'redis-service'
+
+  # Notification configuration
+  brevo-from-email: 'noreply@teamcast.ai'
+  brevo-from-name: 'Teamcast'
+
+  # OAuth configuration
+  oauth-redirect-url: 'https://app.teamcast.ai/auth/callback'
+  oauth-state-secret: 'change-me-in-production'
+  google-oauth-client-id: 'your-google-oauth-client-id'
+  google-oauth-client-secret: 'your-google-oauth-client-secret'
+  github-oauth-client-id: 'your-github-oauth-client-id'
+  github-oauth-client-secret: 'your-github-oauth-client-secret'

@@ -1,0 +1,36 @@
+enum job_parsing_task_status {
+  PENDING
+  PROCESSING
+  UPDATING_JOB_POSTING
+  COMPLETED
+  FAILED
+}
+
+model job_parsing_task {
+  id             String                  @id @default(uuid())
+  jobPosting     job_posting             @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  jobPostingId   String                  @unique
+  status         job_parsing_task_status @default(PENDING)
+  error          String?
+  parsedContent  String?                 @db.Text
+  structuredData Json?
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@map("job_parsing_tasks")
+}
+
+model job_public_parsing_task {
+  id             String                  @id @default(uuid())
+  fileName       String
+  fileUrl        String?
+  status         job_parsing_task_status @default(PENDING)
+  error          String?
+  parsedContent  String?                 @db.Text
+  structuredData Json?
+  mode           String                  @default("INFERRED") // STRICT, INFERRED, GENERATIVE
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
+
+  @@map("job_public_parsing_tasks")
+}

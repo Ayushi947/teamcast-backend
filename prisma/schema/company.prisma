@@ -1,0 +1,136 @@
+// Company Models
+enum company_type {
+  STARTUP
+  SCALE_UP
+  ENTERPRISE
+  AGENCY
+  CONSULTING
+}
+
+enum company_industry {
+  TECHNOLOGY
+  HEALTHCARE
+  FINANCE
+  EDUCATION
+  RETAIL
+  OTHER
+}
+
+enum company_size {
+  ONE_TO_TEN
+  ELEVEN_TO_FIFTY
+  FIFTY_ONE_TO_TWO_HUNDRED
+  TWO_HUNDRED_ONE_TO_FIVE_HUNDRED
+  FIVE_HUNDRED_ONE_TO_THOUSAND
+  OVER_THOUSAND
+}
+
+enum company_stage {
+  SEED
+  EARLY_STAGE
+  GROWTH
+  MATURE
+  ENTERPRISE
+}
+
+enum company_benefits_category {
+  HEALTH
+  FINANCIAL
+  WORK_LIFE_BALANCE
+  PROFESSIONAL_DEVELOPMENT
+  OTHER
+}
+
+enum company_verification_status {
+  IN_PROGRESS
+  UNVERIFIED
+  VERIFIED
+  REJECTED
+}
+
+model company {
+  id          String           @id @default(uuid())
+  name        String
+  description String
+  companyType company_type
+  industry    company_industry
+  size        company_size
+  stage       company_stage
+  foundedYear Int
+  website     String?
+
+  social   company_social?
+  culture  company_culture?
+  benefits String[]
+  client   client?
+  partner  partner?
+
+  // Company contact information
+  contactEmail String?
+  contactPhone String?
+  contactName  String?
+  address      String?
+  city         String?
+  state        String?
+  zipCode      String?
+  country      String?
+
+  // Company verification status
+  remarks String?
+  status  company_verification_status @default(UNVERIFIED)
+
+  // Company shipping address (if different from main address)
+  shippingAddress String?
+  shippingCity    String?
+  shippingState   String?
+  shippingZipCode String?
+  shippingCountry String?
+
+  // Company billing address (if different from main address)
+  billingAddress String?
+  billingCity    String?
+  billingState   String?
+  billingZipCode String?
+  billingCountry String?
+
+  logo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("companies")
+}
+
+model company_social {
+  id        String  @id @default(uuid())
+  companyId String  @unique
+  company   company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  linkedin  String?
+  twitter   String?
+  facebook  String?
+  instagram String?
+  youtube   String?
+  github    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_socials")
+}
+
+model company_culture {
+  id        String  @id @default(uuid())
+  companyId String  @unique
+  company   company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  mission   String?
+  vision    String?
+
+  values          String[]
+  perks           String[]
+  workEnvironment String[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("company_cultures")
+}

@@ -1,0 +1,8 @@
+// Payment provider
+enum payment_provider {
+  STRIPE
+  PAYPAL
+  MANUAL
+  OTHER
+  DUMMY
+}

@@ -1,0 +1,100 @@
+// Partner Models
+model partner {
+  id        String   @id @default(uuid())
+  company   company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  partnerUsers       partner_user[]
+  invitations        partner_user_invitation[]
+  settings           partner_settings?
+  candidates         candidate[]
+  financialData      partner_financial_data?
+  documents          partner_document[]
+  jobApplications    job_application[]
+  supportInvitations support_invitation[]      @relation("SupportInvitationPartner")
+
+  @@map("partners")
+}
+
+// Partner Settings Model
+model partner_settings {
+  id        String  @id @default(uuid())
+  partner   partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String  @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled Boolean @default(true)
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  consultantAlerts     Boolean @default(true)
+  contractAlerts       Boolean @default(true)
+
+  privacySettings     Json?
+  brandingSettings    Json?
+  integrationSettings Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_settings")
+}
+
+// Partner Financial Data Model
+model partner_financial_data {
+  id        String  @id @default(uuid())
+  partner   partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String  @unique
+
+  annualRevenue Decimal @db.Decimal(15, 2)
+  taxId         String
+  vatNumber     String?
+  gstNumber     String?
+
+  bankAccounts partner_bank_account[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_financial_data")
+}
+
+// Partner Bank Account Model
+model partner_bank_account {
+  id              String                 @id @default(uuid())
+  financialData   partner_financial_data @relation(fields: [financialDataId], references: [id], onDelete: Cascade)
+  financialDataId String
+
+  accountName   String
+  accountNumber String
+  bankName      String
+  swiftCode     String
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_bank_accounts")
+}
+
+// Partner Document Model
+model partner_document {
+  id        String  @id @default(uuid())
+  partner   partner @relation(fields: [partnerId], references: [id], onDelete: Cascade)
+  partnerId String
+
+  name       String
+  type       String // e.g., "contract", "certificate", "legal", etc.
+  size       BigInt // file size in bytes
+  url        String // file storage URL
+  uploadedBy String // user ID who uploaded
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("partner_documents")
+}

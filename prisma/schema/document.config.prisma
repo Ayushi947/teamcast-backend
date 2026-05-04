@@ -1,0 +1,18 @@
+model country {
+  id              String            @id @default(uuid())
+  name            String
+  documentConfigs document_config[] // One country has many documents
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model document_config {
+  id          String   @id @default(uuid())
+  doc_name    String
+  doc_type    String
+  is_required Boolean
+  countryId   String
+  country     country  @relation(fields: [countryId], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

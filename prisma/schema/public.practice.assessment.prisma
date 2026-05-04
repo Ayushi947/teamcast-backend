@@ -1,0 +1,370 @@
+// Public Practice Assessment - for assessments created from external job URLs
+enum public_practice_assessment_status {
+  NOT_STARTED
+  AI_INITIALIZATION_IN_PROGRESS
+  AI_INITIALIZATION_COMPLETED
+  IN_PROGRESS
+  AI_REVIEW_IN_PROGRESS
+  AI_REVIEW_COMPLETED
+  COMPLETED
+  FAILED
+}
+
+enum public_practice_assessment_result {
+  NOT_AVAILABLE
+  PASSED
+  FAILED
+}
+
+enum public_practice_assessment_recommendation {
+  HIGHLY_RECOMMENDED
+  RECOMMENDED
+  NOT_RECOMMENDED
+}
+
+model public_practice_assessment {
+  id          String                            @id @default(uuid())
+  candidate   candidate?                        @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String?
+
+  title       String
+  description String
+
+  // Source job information
+  sourceJobUrl   String
+  candidateEmail String
+  candidateName  String
+
+  // Assessment data
+  skillsFocus String[]
+  difficulty  difficulty_level                        @default(MEDIUM)
+  status      public_practice_assessment_status      @default(NOT_STARTED)
+  result      public_practice_assessment_result      @default(NOT_AVAILABLE)
+  score       Float                                  @default(0)
+  duration    Int                                    @default(3600) // in seconds
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Feedback fields
+  overallFeedback     String?
+  strengths           String[] // Array of overall strengths
+  areasForImprovement String[] // Array of overall areas for improvement
+  recommendation      public_practice_assessment_recommendation?
+  selectedForNextRound Boolean @default(false)
+
+  // Skills and fit analysis
+  skills           String[] // Overall skills identified
+  technicalSkills  String[] // Technical skills
+  softSkills       String[] // Soft skills
+  industriesFit    String[] // Industries the candidate fits
+  jobRolesFit      String[] // Job roles the candidate fits
+  experienceSummary String? @db.Text
+  educationSummary  String? @db.Text
+
+  // Linking information
+  linkedAt DateTime? // When the assessment was linked to a candidate account
+
+  // Terms acceptance (for public practice assessments)
+  termsAccepted   Boolean   @default(false)
+  termsAcceptedAt DateTime?
+
+  // Job description and resume text (for AI assessment generation)
+  jobDescriptionText String? @db.Text
+  resumeText         String? @db.Text
+
+  // Relationships
+  sections                public_practice_assessment_section[]
+  task                    public_practice_assessment_task?
+  progressState           public_practice_assessment_progress?
+  videoAnalysis           public_practice_assessment_video_analysis?
+  videoAnalysisStatus     public_practice_assessment_video_analysis_status @default(NOT_STARTED)
+  videoAnalysisError      String?
+  proctoring              public_practice_assessment_proctoring?
+  settings                public_practice_assessment_settings?
+  videoChunkAnalyses      public_practice_assessment_video_chunk_analysis[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([candidateId])
+  @@index([candidateEmail, candidateId])
+  @@map("public_practice_assessments")
+}
+
+// Task for tracking AI initialization
+model public_practice_assessment_task {
+  id                String                            @id @default(uuid())
+  assessment        public_practice_assessment        @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId      String                            @unique
+  status            String                            @default("PENDING") // PENDING, PROCESSING, COMPLETED, FAILED
+  error             String?
+  resumeText        String?                           @db.Text
+  jobDescriptionText String?                          @db.Text
+  createdAt         DateTime                          @default(now())
+  updatedAt         DateTime                          @updatedAt
+
+  @@map("public_practice_assessment_tasks")
+}
+
+enum public_practice_assessment_section_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+enum public_practice_assessment_section_result {
+  NOT_AVAILABLE
+  PASSED
+  FAILED
+}
+
+model public_practice_assessment_section {
+  id           String                                @id @default(uuid())
+  assessment   public_practice_assessment            @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String
+
+  title         String
+  description   String
+  type          String // Section type
+  status        public_practice_assessment_section_status @default(NOT_STARTED)
+  result        public_practice_assessment_section_result @default(NOT_AVAILABLE)
+  score         Float                                  @default(0)
+  order         Int                                    @default(0)
+  passThreshold Float                                  @default(0.7)
+  isRequired    Boolean                                @default(true)
+
+  // Feedback fields
+  feedback            String?  // Section-specific feedback
+  strengths           String[] // Array of section-specific strengths
+  areasForImprovement String[] // Array of areas for improvement
+
+  questions public_practice_assessment_question[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([assessmentId, order])
+  @@map("public_practice_assessment_sections")
+}
+
+model public_practice_assessment_question {
+  id        String                          @id @default(uuid())
+  section   public_practice_assessment_section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  sectionId String
+
+  question      String
+  questionType  question_type // MULTIPLE_CHOICE, TEXT, CODE, etc.
+  options       Json? // For multiple choice options
+  correctAnswer String? // Optional correct answer
+  answerGiven   String? // Candidate's answer
+  score         Float         @default(0)
+  maxScore      Float         @default(1.0)
+  order         Int           @default(0)
+  isRequired    Boolean       @default(true)
+  isLastQuestion Boolean      @default(false)
+  isAnswered    Boolean       @default(false)
+
+  // Feedback for this specific question
+  feedback String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sectionId, order])
+  @@map("public_practice_assessment_questions")
+}
+
+// Video Analysis Status Enum
+enum public_practice_assessment_video_analysis_status {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+  FAILED
+}
+
+// Per-assessment settings
+model public_practice_assessment_settings {
+  id String @id @default(uuid())
+
+  assessment   public_practice_assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                     @unique
+
+  // Source of the settings
+  globalSettings   global_practice_assessment_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+
+  // Max sections and questions per section
+  maxSections            Int @default(6)
+  maxQuestionsPerSection Int @default(8)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(10) // Minimum video length in minutes
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(true) // Auto-publish profile on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage    String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect     String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("public_practice_assessment_settings")
+}
+
+// Model to track assessment progress for restoration after refresh
+model public_practice_assessment_progress {
+  id                String                      @id @default(uuid())
+  assessment        public_practice_assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId      String                      @unique
+  currentSectionId  String?
+  currentQuestionId String?
+  lastSavedAt       DateTime                    @default(now())
+  progressData      Json? // Stores the complete state of the assessment
+  isCompleted       Boolean                     @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("public_practice_assessment_progress")
+}
+
+// Video Analysis model for assessment recording and analysis
+model public_practice_assessment_video_analysis {
+  id           String                      @id @default(uuid())
+  assessment   public_practice_assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                      @unique
+
+  videoUrl           String? // URL to the recorded assessment
+  highlightsVideoUrl String? // URL to the generated highlights video
+
+  transcriptText String? @db.Text // Full transcript of the assessment
+
+  overallScore    Float?
+  overallFeedback String? @db.Text
+
+  // Performance metrics
+  engagementScore    Float?
+  engagementFeedback String?
+
+  confidenceScore    Float?
+  confidenceFeedback String?
+
+  clarityScore    Float?
+  clarityFeedback String?
+
+  professionalDemeanorScore    Float?
+  professionalDemeanorFeedback String?
+
+  proctoringScore    Float?
+  proctoringFeedback String?
+
+  // Analysis Results
+  strengths           String[] @default([])
+  areasForImprovement String[] @default([])
+
+  highlightsInstructions String? @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("public_practice_assessment_video_analysis")
+}
+
+// Proctoring model to track suspicious behavior
+model public_practice_assessment_proctoring {
+  id           String                      @id @default(uuid())
+  assessment   public_practice_assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId String                      @unique
+
+  // Proctoring metrics
+  warningCount     Int   @default(0)
+  suspiciousEvents Json? // Log of suspicious events with timestamps
+
+  // Suspicious behavior types
+  tabSwitches             Int     @default(0)
+  copyPasteAttempts       Int     @default(0)
+  multiplePersonsDetected Boolean @default(false)
+  audioIrregularities     Boolean @default(false)
+  screenShareViolations   Boolean @default(false)
+
+  automaticallyFailed  Boolean @default(false)
+  manualReviewRequired Boolean @default(false)
+  reviewerNotes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("public_practice_assessment_proctoring")
+}
+
+
+model public_practice_parsed_job_data {
+  id          String   @id @default(uuid())
+  jobUrl      String   // Original job URL
+  parsedData  Json     // Full parsed job data (stored as JSON)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([jobUrl])
+  @@map("public_practice_parsed_job_data")
+}
+
+// Video Chunk Analysis model for per-chunk video analysis
+model public_practice_assessment_video_chunk_analysis {
+  id            String                      @id @default(uuid())
+  assessment    public_practice_assessment  @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  assessmentId  String                      @map("assessment_id")
+  chunkIndex    Int                         @map("chunk_index")
+  questionId    String?                     @map("question_id") // Track which question this chunk answers
+  sectionId     String?                     @map("section_id") // Track which section this chunk belongs to
+  attemptNumber Int                         @default(1) @map("attempt_number") // Track restart attempts (1, 2, 3...)
+  gcsUri        String                      @map("gcs_uri") // GCS URI for playback (gs://bucket/path)
+  publicUrl     String?                     @map("public_url") // Optional signed URL for playback
+  analysis      Json?                       // Stores ChunkAnalysis object (null if not yet analyzed)
+  status        String                      @default("uploaded") @map("status") // uploaded, analyzing, completed, failed
+  isRelevant    Boolean                     @default(true) @map("is_relevant") // False if superseded by restart
+  processedAt   DateTime?                  @map("processed_at")
+  createdAt     DateTime                    @default(now()) @map("created_at")
+  updatedAt     DateTime                    @updatedAt @map("updated_at")
+
+  @@unique([assessmentId, chunkIndex, sectionId], name: "public_practice_video_chunk_analysis_assessment_id_chunk_index_section_id_key")
+  @@index([assessmentId], map: "ppa_vca_assessment_id_idx")
+  @@index([questionId], map: "ppa_vca_question_id_idx")
+  @@index([sectionId], map: "ppa_vca_section_id_idx")
+  @@index([status], map: "ppa_vca_status_idx")
+  @@index([assessmentId, questionId, attemptNumber], map: "ppa_vca_assess_q_attempt_idx")
+  @@index([assessmentId, sectionId, attemptNumber], map: "ppa_vca_assess_s_attempt_idx")
+  @@map("public_practice_assessment_video_chunk_analysis")
+}
+

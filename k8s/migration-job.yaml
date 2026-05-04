@@ -1,0 +1,125 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: teamcast-migration
+  namespace: teamcast
+  labels:
+    app: teamcast-backend
+    component: migration
+  annotations:
+    # Generate unique job name for each migration run
+    timestamp: "{{ .Values.migrationTimestamp | default now }}"
+spec:
+  ttlSecondsAfterFinished: 3600 # Clean up job after 1 hour
+  backoffLimit: 3 # Retry up to 3 times on failure
+  template:
+    metadata:
+      labels:
+        app: teamcast-backend
+        component: migration
+    spec:
+      serviceAccountName: teamcast-backend # Use workload identity
+      restartPolicy: Never
+      initContainers:
+        # Wait for database to be ready
+        - name: wait-for-db
+          image: postgres:15-alpine
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: database-url
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for database to be ready..."
+              until pg_isready -d "$DATABASE_URL"; do
+                echo "Database not ready, waiting..."
+                sleep 2
+              done
+              echo "Database is ready!"
+      containers:
+        - name: migration
+          image: us-central1-docker.pkg.dev/teamcastai/teamcast/migration:latest
+          env:
+            # Database configuration
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-secrets
+                  key: database-url
+            - name: NODE_ENV
+              value: "production"
+
+            # Google Cloud configuration - Workload Identity
+            - name: GOOGLE_CLOUD_PROJECT_ID
+              value: "teamcastai"
+            - name: GOOGLE_CLOUD_VERTEX_AI_LOCATION
+              value: "us-central1"
+
+            # Migration specific settings
+            - name: SKIP_SEEDING
+              value: "true" # Skip seeding in production migrations
+
+          command: ["./scripts/db-migrate.sh"]
+          args: ["--skip-seed"] # Ensure no seeding in production
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+---
+# CronJob for periodic migration status checks (optional)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: teamcast-migration-check
+  namespace: teamcast
+  labels:
+    app: teamcast-backend
+    component: migration-check
+spec:
+  schedule: "0 2 * * *" # Run daily at 2 AM
+  suspend: true # Disabled by default
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: teamcast-backend
+            component: migration-check
+        spec:
+          serviceAccountName: teamcast-backend
+          restartPolicy: Never
+          containers:
+            - name: migration-check
+              image: us-central1-docker.pkg.dev/teamcastai/teamcast/migration:latest
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: teamcast-secrets
+                      key: database-url
+                - name: NODE_ENV
+                  value: "production"
+                - name: GOOGLE_CLOUD_PROJECT_ID
+                  value: "teamcastai"
+              command: ["./scripts/db-migrate.sh"]
+              args: ["--status"]
+              resources:
+                requests:
+                  memory: "128Mi"
+                  cpu: "50m"
+                limits:
+                  memory: "256Mi"
+                  cpu: "200m"

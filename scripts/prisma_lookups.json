@@ -1,0 +1,540 @@
+{
+    "LookupStatus": [
+      "ACTIVE",
+      "INACTIVE"
+    ],
+    "ai_assessment_recommendation": [
+      "HIGHLY_RECOMMENDED",
+      "NOT_RECOMMENDED",
+      "RECOMMENDED"
+    ],
+    "ai_assessment_result": [
+      "AI_REVIEW_FAILED",
+      "MANUAL_REVIEW_FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "ai_assessment_section_result": [
+      "FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "ai_assessment_section_status": [
+      "COMPLETED",
+      "FAILED",
+      "IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "ai_assessment_status": [
+      "AI_INITIALIZATION_COMPLETED",
+      "AI_INITIALIZATION_IN_PROGRESS",
+      "AI_REVIEW_COMPLETED",
+      "AI_REVIEW_IN_PROGRESS",
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_FAILED",
+      "CANDIDATE_ASSESSMENT_COMPLETED",
+      "CANDIDATE_ASSESSMENT_IN_PROGRESS",
+      "MANUAL_REVIEW_COMPLETED",
+      "MANUAL_REVIEW_IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "ai_assessment_task_status": [
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_STARTED",
+      "COMPLETED",
+      "FAILED",
+      "INITIALIZE_COMPLETED",
+      "INITIALIZE_STARTED",
+      "PENDING"
+    ],
+    "application_status": [
+      "ACCEPTED",
+      "APPLIED",
+      "ASSESSING",
+      "DRAFT",
+      "FAILED",
+      "INVITED",
+      "OFFERED",
+      "REJECTED",
+      "REVIEWING",
+      "SHORTLISTED",
+      "WITHDRAWN"
+    ],
+    "candidate_assessment_stage": [
+      "ONBOARDING_ASSESSMENT",
+      "RESUME_ASSESSMENT"
+    ],
+    "candidate_credit_type": [
+      "PRACTICE_ASSESSMENT"
+    ],
+    "candidate_job_search_status": [
+      "NOT_LOOKING",
+      "OPEN_TO_OPPORTUNITIES"
+    ],
+    "candidate_onboarding_assessment_status": [
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_FAILED",
+      "ASSESSMENT_IN_PROGRESS",
+      "ASSESSMENT_NOT_DONE"
+    ],
+    "candidate_recommendation_feedback_type": [
+      "ALREADY_APPLIED",
+      "DISLIKE",
+      "IRRELEVANT",
+      "LIKE",
+      "LOCATION_MISMATCH",
+      "NOT_INTERESTED",
+      "NOT_RELEVANT",
+      "OTHER",
+      "RELEVANT",
+      "SALARY_MISMATCH",
+      "SKILL_MISMATCH",
+      "TOO_JUNIOR",
+      "TOO_SENIOR"
+    ],
+    "candidate_resume_assessment_status": [
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_FAILED",
+      "ASSESSMENT_IN_PROGRESS",
+      "ASSESSMENT_NOT_DONE"
+    ],
+    "candidate_status": [
+      "HIRED",
+      "NEW",
+      "ONBOARDED",
+      "REJECTED"
+    ],
+    "candidate_subscription_status": [
+      "ACTIVE",
+      "CANCELLED",
+      "EXPIRED",
+      "PENDING",
+      "TRIALING"
+    ],
+    "certification_level": [
+      "ADVANCED",
+      "BASIC",
+      "EXPERT",
+      "INTERMEDIATE"
+    ],
+    "client_credit_type": [
+      "AI_ASSESSMENT",
+      "CANDIDATE_VIEW",
+      "SEAT"
+    ],
+    "client_subscription_status": [
+      "ACTIVE",
+      "CANCELLED",
+      "EXPIRED",
+      "PENDING",
+      "TRIALING"
+    ],
+    "client_user_invitation_status": [
+      "ACCEPTED",
+      "EXPIRED",
+      "PENDING",
+      "WITHDRAWN"
+    ],
+    "communication_channel": [
+      "EMAIL",
+      "IN_APP",
+      "PHONE",
+      "SMS"
+    ],
+    "company_benefits_category": [
+      "FINANCIAL",
+      "HEALTH",
+      "OTHER",
+      "PROFESSIONAL_DEVELOPMENT",
+      "WORK_LIFE_BALANCE"
+    ],
+    "company_industry": [
+      "EDUCATION",
+      "FINANCE",
+      "HEALTHCARE",
+      "OTHER",
+      "RETAIL",
+      "TECHNOLOGY"
+    ],
+    "company_size": [
+      "ELEVEN_TO_FIFTY",
+      "FIFTY_ONE_TO_TWO_HUNDRED",
+      "FIVE_HUNDRED_ONE_TO_THOUSAND",
+      "ONE_TO_TEN",
+      "OVER_THOUSAND",
+      "TWO_HUNDRED_ONE_TO_FIVE_HUNDRED"
+    ],
+    "company_stage": [
+      "EARLY_STAGE",
+      "ENTERPRISE",
+      "GROWTH",
+      "MATURE",
+      "SEED"
+    ],
+    "company_type": [
+      "AGENCY",
+      "CONSULTING",
+      "ENTERPRISE",
+      "SCALE_UP",
+      "STARTUP"
+    ],
+    "date_format": [
+      "DD_MM_YYYY",
+      "MM_DD_YYYY",
+      "YYYY_MM_DD"
+    ],
+    "difficulty_level": [
+      "EASY",
+      "EXPERT",
+      "HARD",
+      "MEDIUM"
+    ],
+    "education_level": [
+      "BACHELORS",
+      "DOCTORATE",
+      "HIGH_SCHOOL",
+      "MASTERS"
+    ],
+    "job_posting_status": [
+      "ARCHIVED",
+      "CLOSED",
+      "DRAFT",
+      "PUBLISHED"
+    ],
+    "job_recommendation_feedback_type": [
+      "ALREADY_APPLIED",
+      "DISLIKE",
+      "IRRELEVANT",
+      "LIKE",
+      "LOCATION_MISMATCH",
+      "NOT_INTERESTED",
+      "NOT_RELEVANT",
+      "OTHER",
+      "RELEVANT",
+      "SALARY_MISMATCH",
+      "SKILL_MISMATCH",
+      "TOO_JUNIOR",
+      "TOO_SENIOR"
+    ],
+    "job_requirement_type": [
+      "NICE_TO_HAVE",
+      "PREFERRED",
+      "REQUIRED"
+    ],
+    "marital_status": [
+      "DIVORCED",
+      "MARRIED",
+      "PREFER_NOT_TO_SAY",
+      "SINGLE",
+      "WIDOWED"
+    ],
+    "notice_period": [
+      "IMMEDIATE",
+      "ONE_MONTH",
+      "ONE_WEEK",
+      "THREE_MONTHS",
+      "TWO_MONTHS",
+      "TWO_WEEKS"
+    ],
+    "onboarding_assessment_recommendation": [
+      "HIGHLY_RECOMMENDED",
+      "NOT_RECOMMENDED",
+      "RECOMMENDED"
+    ],
+    "onboarding_assessment_result": [
+      "AI_REVIEW_FAILED",
+      "MANUAL_REVIEW_FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "onboarding_assessment_section_result": [
+      "FAILED_AI_REVIEW",
+      "FAILED_MANUAL_REVIEW",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "onboarding_assessment_section_status": [
+      "COMPLETED",
+      "FAILED",
+      "IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "onboarding_assessment_status": [
+      "AI_INITIALIZATION_COMPLETED",
+      "AI_INITIALIZATION_IN_PROGRESS",
+      "AI_REVIEW_COMPLETED",
+      "AI_REVIEW_IN_PROGRESS",
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_FAILED",
+      "CANDIDATE_ASSESSMENT_COMPLETED",
+      "CANDIDATE_ASSESSMENT_IN_PROGRESS",
+      "MANUAL_REVIEW_COMPLETED",
+      "MANUAL_REVIEW_IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "onboarding_assessment_task_status": [
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_STARTED",
+      "COMPLETED",
+      "FAILED",
+      "INITIALIZE_COMPLETED",
+      "INITIALIZE_STARTED",
+      "PENDING"
+    ],
+    "payment_provider": [
+      "DUMMY",
+      "MANUAL",
+      "OTHER",
+      "PAYPAL",
+      "STRIPE"
+    ],
+    "practice_assessment_result": [
+      "FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "practice_assessment_section_result": [
+      "FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "practice_assessment_section_status": [
+      "COMPLETED",
+      "FAILED",
+      "IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "practice_assessment_status": [
+      "COMPLETED",
+      "FAILED",
+      "IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "question_type": [
+      "BOOLEAN",
+      "CODE",
+      "MULTIPLE_CHOICE",
+      "TEXT"
+    ],
+    "rag_task_cron_status": [
+      "COMPLETED",
+      "FAILED",
+      "PENDING",
+      "PROCESSING"
+    ],
+    "resume_assessment_recommendation": [
+      "HIGHLY_RECOMMENDED",
+      "NOT_RECOMMENDED",
+      "RECOMMENDED"
+    ],
+    "resume_assessment_result": [
+      "AI_REVIEW_FAILED",
+      "MANUAL_REVIEW_FAILED",
+      "NOT_AVAILABLE",
+      "PASSED"
+    ],
+    "resume_assessment_status": [
+      "AI_REVIEW_COMPLETED",
+      "AI_REVIEW_IN_PROGRESS",
+      "ASSESSMENT_COMPLETED",
+      "ASSESSMENT_FAILED",
+      "MANUAL_REVIEW_COMPLETED",
+      "MANUAL_REVIEW_IN_PROGRESS",
+      "NOT_STARTED"
+    ],
+    "resume_assessment_task_status": [
+      "COMPLETED",
+      "FAILED",
+      "PENDING",
+      "PROCESSING",
+      "UPDATING_CANDIDATE_RESUME_ASSESSMENT"
+    ],
+    "resume_parsing_task_cron_status": [
+      "COMPLETED",
+      "FAILED",
+      "PENDING",
+      "PROCESSING"
+    ],
+    "resume_parsing_task_status": [
+      "COMPLETED",
+      "FAILED",
+      "PENDING",
+      "PROCESSING",
+      "UPDATING_CANDIDATE_RESUME"
+    ],
+    "sex": [
+      "FEMALE",
+      "MALE",
+      "OTHER",
+      "PREFER_NOT_TO_SAY"
+    ],
+    "time_format": [
+      "TWELVE_HOUR",
+      "TWENTY_FOUR_HOUR"
+    ],
+    "user_role": [
+      "ACCOUNTS",
+      "ADMIN",
+      "HR",
+      "INDIVIDUAL",
+      "PARTNER_RESOURCE",
+      "RECRUITER"
+    ],
+    "user_status": [
+      "ACTIVE",
+      "BLOCKED",
+      "INACTIVE"
+    ],
+    "user_type": [
+      "CANDIDATE",
+      "CLIENT",
+      "PARTNER",
+      "SUPPORT"
+    ],
+    "work_commitment": [
+      "FULL_TIME",
+      "HOURLY",
+      "PART_TIME",
+      "PROJECT_BASED"
+    ],
+    "work_schedule": [
+      "FLEXIBLE",
+      "REGULAR",
+      "SHIFT_BASED"
+    ],
+    "work_type": [
+      "APPRENTICESHIP",
+      "CONTRACTOR",
+      "EMPLOYEE",
+      "FREELANCER",
+      "INTERN",
+      "OTHER",
+      "VOLUNTEER"
+    ],
+    "languages": [
+      "ENGLISH",
+      "SPANISH",
+      "FRENCH",
+      "GERMAN",
+      "MANDARIN",
+      "HINDI",
+      "ARABIC",
+      "PORTUGUESE",
+      "RUSSIAN",
+      "JAPANESE"
+    ],
+    "position": [
+      "JUNIOR",
+      "MID_LEVEL",
+      "SENIOR",
+      "LEAD",
+      "MANAGER",
+      "DIRECTOR",
+      "EXECUTIVE",
+      "ENTRY_LEVEL"
+    ],
+    "industry": [
+      "SOFTWARE_DEVELOPMENT",
+      "DATA_SCIENCE",
+      "ARTIFICIAL_INTELLIGENCE",
+      "CLOUD_COMPUTING",
+      "CYBERSECURITY",
+      "BLOCKCHAIN",
+      "MOBILE_DEVELOPMENT",
+      "WEB_DEVELOPMENT",
+      "DEVOPS",
+      "UI_UX_DESIGN"
+    ],
+    "skills": [
+      "JAVA",
+      "PYTHON",
+      "JAVASCRIPT",
+      "REACT",
+      "NODE_JS",
+      "AWS",
+      "DOCKER",
+      "KUBERNETES",
+      "MACHINE_LEARNING",
+      "SQL",
+      "NOSQL",
+      "GIT",
+      "AGILE",
+      "SCRUM"
+    ],
+    "company": [
+      "GOOGLE",
+      "MICROSOFT",
+      "AMAZON",
+      "APPLE",
+      "META",
+      "NETFLIX",
+      "UBER",
+      "AIRBNB",
+      "SPOTIFY",
+      "TWITTER"
+    ],
+    "field_of_study": [
+      "COMPUTER_SCIENCE",
+      "SOFTWARE_ENGINEERING",
+      "INFORMATION_TECHNOLOGY",
+      "DATA_SCIENCE",
+      "ARTIFICIAL_INTELLIGENCE",
+      "COMPUTER_ENGINEERING",
+      "ELECTRICAL_ENGINEERING",
+      "MATHEMATICS",
+      "PHYSICS",
+      "BUSINESS_ADMINISTRATION"
+    ],
+    "educational_institutions": [
+      "STANFORD_UNIVERSITY",
+      "MIT",
+      "HARVARD_UNIVERSITY",
+      "CARNEGIE_MELLON",
+      "UC_BERKELEY",
+      "GEORGIA_TECH",
+      "UNIVERSITY_OF_TEXAS",
+      "UNIVERSITY_OF_MICHIGAN",
+      "UNIVERSITY_OF_ILLINOIS",
+      "CALIFORNIA_INSTITUTE_OF_TECHNOLOGY"
+    ],
+    "preferred_job_titles": [
+      "SOFTWARE_ENGINEER",
+      "FRONTEND_DEVELOPER",
+      "BACKEND_DEVELOPER",
+      "FULL_STACK_DEVELOPER",
+      "DATA_SCIENTIST",
+      "MACHINE_LEARNING_ENGINEER",
+      "DEVOPS_ENGINEER",
+      "PRODUCT_MANAGER",
+      "UI_UX_DESIGNER",
+      "SOLUTIONS_ARCHITECT"
+    ],
+    "preferred_responsibilities": [
+      "TEAM_LEADERSHIP",
+      "PROJECT_MANAGEMENT",
+      "CODE_REVIEW",
+      "MENTORING",
+      "ARCHITECTURE_DESIGN",
+      "PERFORMANCE_OPTIMIZATION",
+      "SECURITY_IMPLEMENTATION",
+      "API_DESIGN",
+      "DATABASE_DESIGN",
+      "TESTING_AND_QUALITY_ASSURANCE"
+    ],
+    "preferred_benefits": [
+      "HEALTH_INSURANCE",
+      "DENTAL_INSURANCE",
+      "VISION_INSURANCE",
+      "LIFE_INSURANCE",
+      "401K_MATCHING",
+      "FLEXIBLE_WORKING_HOURS",
+      "REMOTE_WORK_OPTIONS",
+      "PAID_TIME_OFF",
+      "PARENTAL_LEAVE",
+      "PROFESSIONAL_DEVELOPMENT",
+      "GYM_MEMBERSHIP",
+      "STOCK_OPTIONS",
+      "ANNUAL_BONUS",
+      "COMMUTER_BENEFITS"
+    ]
+  }

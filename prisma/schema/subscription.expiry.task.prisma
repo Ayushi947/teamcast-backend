@@ -1,0 +1,29 @@
+enum subscription_expiry_task_cron_status {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+  CANCELLED
+}
+
+enum subscription_expiry_task_type {
+  CLIENT_SUBSCRIPTION_EXPIRY
+  CANDIDATE_SUBSCRIPTION_EXPIRY
+}
+
+model subscription_expiry_task_cron {
+  id                   String                               @id @default(uuid())
+  type                 subscription_expiry_task_type
+  status               subscription_expiry_task_cron_status @default(PENDING)
+  totalSubscriptions   Int                                  @default(0)
+  expiredSubscriptions Int                                  @default(0)
+  failedSubscriptions  Int                                  @default(0)
+  startedAt            DateTime?
+  completedAt          DateTime?
+  errorMessage         String?
+  metadata             Json?
+  createdAt            DateTime                             @default(now())
+  updatedAt            DateTime                             @updatedAt
+
+  @@map("subscription_expiry_task_crons")
+}

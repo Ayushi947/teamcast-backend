@@ -1,0 +1,66 @@
+// Support Invitation Import Schema
+
+model support_invitation_import {
+  id            String @id @default(uuid())
+  batchId       String // Groups invitations from the same import
+  supportUserId String // Support user who uploaded the file
+
+  // Original Excel data
+  email      String
+  name       String
+  jobTitle   String?
+  phone      String?
+  location   String?
+  experience Int? // Years of experience
+  skills     String? // Comma-separated skills from Excel
+  education  String?
+  gender     String?
+  languages  String? // Comma-separated languages from Excel
+
+  // Import metadata
+  originalFileName String
+  storedFileName   String
+  fileUrl          String
+  uploadedBy       String
+  uploadCount      Int    @default(1) // Track how many times this support user has uploaded files
+
+  // Processing status
+  status           support_invitation_import_status @default(PENDING)
+  isDuplicate      Boolean                          @default(false)
+  duplicateScore   Float? // Fuzzy match score (0.0-1.0)
+  duplicateOf      String? // Reference to original invitation import ID
+  validationErrors String? // JSON array of validation errors
+
+  // Integration tracking
+  integrationProviderId String? // ID of the integration provider used for import
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  supportUser    support_user @relation("SupportInvitationImports", fields: [supportUserId], references: [id], onDelete: Cascade)
+  uploadedByUser user         @relation("SupportInvitationImportUploads", fields: [uploadedBy], references: [id], onDelete: Cascade)
+
+  // Relationship to actual invitation (if processed into invitation table)
+  invitationId String?
+
+  @@unique([email, batchId], name: "unique_email_per_batch")
+  @@index([batchId])
+  @@index([supportUserId])
+  @@index([email])
+  @@index([status])
+  @@index([invitationId])
+  @@index([uploadCount])
+  @@index([integrationProviderId])
+  @@map("support_invitation_imports")
+}
+
+enum support_invitation_import_status {
+  PENDING
+  PROCESSED
+  INVITED
+  DUPLICATE
+  FAILED
+  ACCEPTED
+}

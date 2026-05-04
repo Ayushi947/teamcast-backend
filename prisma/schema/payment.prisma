@@ -1,0 +1,38 @@
+// Payment status enum
+enum payment_status {
+  SUCCEEDED
+  FAILED
+  PENDING
+  CANCELED
+  REFUNDED
+}
+
+// Payment model for tracking Stripe payments
+model payment {
+  id              String         @id @default(uuid())
+  intentId        String // Generic user ID (client, candidate, partner, etc.)
+  subscriptionId  String?
+  stripePaymentId String         @unique
+  stripeInvoiceId String?
+  amount          Int // Amount in cents
+  currency        String         @default("USD")
+  status          payment_status @default(PENDING)
+  receiptUrl      String?
+  paymentMethod   String? // Payment method type (card, bank_transfer, etc.)
+  paymentMethodId String? // Stripe payment method ID
+  description     String? // Payment description
+  metadata        Json? // Additional payment metadata
+
+  // Webhook tracking
+  webhookReceivedAt DateTime?
+  webhookEventId    String? // Stripe webhook event ID
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  subscription client_subscription? @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+
+  @@map("payments")
+}

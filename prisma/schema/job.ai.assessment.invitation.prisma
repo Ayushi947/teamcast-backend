@@ -1,0 +1,46 @@
+// Interview Invitation Models
+enum job_assessment_invitation_status {
+  PENDING
+  ACCEPTED
+  DECLINED
+  EXPIRED
+  CANCELLED
+}
+
+enum job_assessment_invitation_type {
+  AI
+  PANEL
+}
+
+model job_ai_assessment_invitation {
+  id String @id @default(uuid())
+
+  client           client          @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId         String
+  candidate        candidate       @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId      String
+  jobApplication   job_application @relation(fields: [jobApplicationId], references: [id], onDelete: Cascade)
+  jobApplicationId String
+
+  jobAiAssessment   job_ai_assessment? @relation(fields: [jobAiAssessmentId], references: [id])
+  jobAiAssessmentId String?
+
+  invitedBy     client_user                      @relation(fields: [invitedById], references: [id], onDelete: Cascade)
+  invitedById   String
+  type          job_assessment_invitation_type   @default(AI)
+  status        job_assessment_invitation_status @default(PENDING)
+  message       String?                          @db.Text
+  scheduledDate DateTime?
+  expiresAt     DateTime
+  createdAt     DateTime                         @default(now())
+  updatedAt     DateTime                         @updatedAt
+
+  @@index([clientId])
+  @@index([candidateId])
+  @@index([jobApplicationId])
+  @@index([type])
+  @@index([status])
+  @@index([expiresAt])
+  @@index([scheduledDate])
+  @@map("job_ai_assessment_invitations")
+}

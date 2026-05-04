@@ -1,0 +1,215 @@
+enum verification_status {
+  UNVERIFIED
+  REVISED
+  VERIFIED
+  REJECTED
+}
+
+// Client Models
+model client {
+  id        String  @id @default(uuid())
+  company   company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  companyId String  @unique
+
+  clientUsers                client_user[]
+  jobPostings                job_posting[]
+  invitations                client_user_invitation[]
+  supportInvitations         support_invitation[]           @relation("SupportInvitationClient")
+  jobAiAssessmentInvitations job_ai_assessment_invitation[]
+  settings                   client_settings?
+  clientAiAssessmentSettings client_ai_assessment_settings?
+  subscriptions              client_subscription[]
+  financialData              client_financial_data?
+  documents                  client_document[]
+
+  // Integration relations
+  integrations client_integration[]
+
+  // Panel assessment relations
+  panelAssessmentInvitations job_panel_assessment_invitation[]
+  panelAssessmentSlots       job_panel_assessment_slots[]
+
+  // Shortlist relations
+  candidateShortlists candidate_shortlist[]
+
+  // Account manager assignments
+  accountManagerAssignments client_account_manager_assignment[] @relation("ClientAccountManagerAssignments")
+
+  // Account manager assignment history
+  accountManagerAssignmentHistory account_manager_assignment_history[]
+
+  // Candidate import relations
+  candidateImports candidate_import[] @relation("CandidateImports")
+
+  // MCP (Model Context Protocol) clients
+  mcpClients mcp_client[]
+
+  // Feature flags (client-specific overrides)
+  featureFlags        feature_flag[]
+  featureFlagSchedules feature_flag_schedule[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("clients")
+}
+
+// Client Settings Model
+model client_settings {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String @unique
+
+  // Global settings reference (optional)
+  globalSettings   global_settings? @relation(fields: [globalSettingsId], references: [id])
+  globalSettingsId String?
+
+  notificationsEnabled Boolean @default(true)
+  emailNotifications   Boolean @default(true)
+  pushNotifications    Boolean @default(true)
+  jobAlerts            Boolean @default(true)
+  candidateAlerts      Boolean @default(true)
+  applicationAlerts    Boolean @default(true)
+
+  privacySettings     Json?
+  brandingSettings    Json?
+  integrationSettings Json?
+
+  // Deel Integration Configuration (Managed by Support Admin)
+  isDeelEnabled    Boolean   @default(false) // Whether Deel SSO is enabled for this client
+  deelConfiguredAt DateTime? // When Deel was configured/enabled
+  deelConfiguredBy String? // Support admin user ID who enabled Deel
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_settings")
+}
+
+// Job AI Assessment Settings Model
+model client_ai_assessment_settings {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String @unique
+
+  // Source of the settings
+  globalJobAiAssessmentSettings   global_job_ai_assessment_settings? @relation(fields: [globalJobAiAssessmentSettingsId], references: [id])
+  globalJobAiAssessmentSettingsId String?
+
+  // Job posting settings reference (optional)
+  jobPostingAiAssessmentSettings job_posting_ai_assessment_settings[]
+
+  // Greeting message
+  greetingMessage String?
+
+  // Assessment configuration
+  defaultAssessmentDuration Int      @default(3600) // in seconds
+  defaultPassingScore       Float    @default(0.7) // Score threshold to pass (0.0-1.0)
+  requiredSections          String[] // Types of sections required in all assessments
+  maximumAttempts           Int      @default(3) // Maximum attempts allowed
+  cooldownPeriod            Int      @default(7) // Days between attempts
+  maxAssessmentDuration     Int      @default(7200) // in seconds
+  assessmentBuffer          Int      @default(300) // Buffer time in seconds
+
+  // AI configuration
+  useCustomPrompts Boolean @default(false)
+  aiDifficulty     String  @default("MEDIUM") // EASY, MEDIUM, HARD
+  customPrompts    Json? // Custom prompts for AI assessment
+  skillWeightings  Json? // Weightings for different skills
+
+  // Max sections and questions per section
+  maxSections            Int @default(5)
+  maxQuestionsPerSection Int @default(5)
+
+  // Proctoring configuration
+  proctoringEnabled Boolean @default(true)
+  maxWarnings       Int     @default(3) // Maximum warnings before automatic failure
+  tabSwitchLimit    Int     @default(3) // Number of tab switches allowed
+  copyPasteAllowed  Boolean @default(false)
+
+  // Video analysis configuration
+  videoRecordingEnabled  Boolean @default(true)
+  minimumVideoLength     Int     @default(300) // Minimum video length in seconds
+  aiVideoAnalysisEnabled Boolean @default(true)
+
+  // Automatic actions
+  autoPublishOnSuccess Boolean @default(false) // Auto-publish result on passing
+  autoNotifyOnComplete Boolean @default(true) // Auto-notify candidate on completion
+
+  // Voice configuration
+  interviewLanguage    String? // Primary language for interviews (e.g., "ENGLISH")
+  interviewDialect     String? // Dialect code for voice synthesis (e.g., "en-US", "en-GB", "en-AU", "en-CA", "en-IN")
+  interviewVoiceGender String? // Voice gender: "female" or "male"
+
+  // Section templates (stored as JSON)
+  sectionTemplates  Json? // Predefined section templates
+  questionTemplates Json? // Predefined question templates
+
+  // Customization
+  customStyles       Json? // UI customization options
+  customInstructions String? // Custom instructions for candidates
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_ai_assessment_settings")
+}
+
+// Client Financial Data Model
+model client_financial_data {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String @unique
+
+  annualRevenue Decimal @db.Decimal(15, 2)
+  taxId         String
+  vatNumber     String?
+  gstNumber     String?
+
+  bankAccounts client_bank_account[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_financial_data")
+}
+
+// Client Bank Account Model
+model client_bank_account {
+  id              String                @id @default(uuid())
+  financialData   client_financial_data @relation(fields: [financialDataId], references: [id], onDelete: Cascade)
+  financialDataId String
+
+  accountName   String
+  accountNumber String
+  bankName      String
+  swiftCode     String
+  isDefault     Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_bank_accounts")
+}
+
+// Client Document Model
+model client_document {
+  id       String @id @default(uuid())
+  client   client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId String
+
+  name       String
+  type       String // e.g., "contract", "certificate", "legal", etc.
+  size       BigInt // file size in bytes
+  url        String // file storage URL
+  uploadedBy String // user ID who uploaded
+
+  status     verification_status? @default(UNVERIFIED)
+  verifiedAt DateTime?
+  remarks    String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_documents")
+}

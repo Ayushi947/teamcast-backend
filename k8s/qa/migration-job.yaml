@@ -1,0 +1,81 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: teamcast-qa-migration
+  namespace: teamcast-qa
+  labels:
+    app: teamcast-backend
+    component: migration
+    environment: qa
+  annotations:
+    # Generate unique job name for each migration run
+    timestamp: "{{ .Values.migrationTimestamp | default now }}"
+spec:
+  ttlSecondsAfterFinished: 7200 # Clean up job after 2 hours
+  backoffLimit: 3 # Retry up to 3 times on failure
+  template:
+    metadata:
+      labels:
+        app: teamcast-backend
+        component: migration
+        environment: qa
+    spec:
+      serviceAccountName: teamcast-backend-qa
+      restartPolicy: Never
+      initContainers:
+        # Wait for database to be ready
+        - name: wait-for-db
+          image: postgres:15-alpine
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-qa-secrets
+                  key: database-url
+          command:
+            - sh
+            - -c
+            - |
+              echo "Waiting for QA database to be ready..."
+              until pg_isready -d "$DATABASE_URL"; do
+                echo "Database not ready, waiting..."
+                sleep 2
+              done
+              echo "QA Database is ready!"
+      containers:
+        - name: migration
+          image: us-central1-docker.pkg.dev/teamcastai/teamcast/migration:latest
+          env:
+            # Database configuration
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: teamcast-qa-secrets
+                  key: database-url
+            - name: NODE_ENV
+              value: "qa"
+
+            # Google Cloud configuration - Workload Identity
+            - name: GOOGLE_CLOUD_PROJECT_ID
+              value: "teamcastai"
+            - name: GOOGLE_CLOUD_VERTEX_AI_LOCATION
+              value: "us-central1"
+
+            # QA specific settings
+            - name: SKIP_SEEDING
+              value: "false" # Allow seeding in QA for testing
+
+          command: ["./scripts/db-migrate.sh"]
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000

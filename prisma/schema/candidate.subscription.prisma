@@ -1,0 +1,113 @@
+enum candidate_subscription_status {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+  TRIALING
+}
+
+model candidate_subscription_package {
+  id          String @id @default(uuid())
+  name        String // e.g., "Free", "Starter", "Professional"
+  description String
+
+  // Only one package can be the default
+  isDefault Boolean @default(false)
+
+  price        Float
+  currency     String  @default("USD")
+  billingCycle String  @default("MONTHLY") // MONTHLY, QUARTERLY, ANNUALLY
+  isActive     Boolean @default(true)
+
+  // Package limits
+  maxAssessmentsPerMonth Int
+  maxPracticeAssessments Int
+  accessToAllSkills      Boolean @default(false)
+  personalizedFeedback   Boolean @default(false)
+  careerCoaching         Boolean @default(false)
+
+  // Payment Provider specific fields
+  paymentProvider          payment_provider @default(DUMMY)
+  paymentProviderPriceId   String? // Payment Provider Price ID for this package
+  paymentProviderProductId String? // Payment Provider Product ID for this package
+
+  // Additional features
+  features Json?
+
+  // Relationships
+  candidateSubscriptions candidate_subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("candidate_subscription_packages")
+}
+
+enum candidate_credit_type {
+  PRACTICE_ASSESSMENT
+}
+
+model candidate_subscription {
+  id          String                         @id @default(uuid())
+  candidate   candidate                      @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  candidateId String                         @unique
+  package     candidate_subscription_package @relation(fields: [packageId], references: [id])
+  packageId   String
+
+  status    candidate_subscription_status @default(ACTIVE)
+  startDate DateTime                      @default(now())
+  endDate   DateTime?
+  autoRenew Boolean                       @default(true)
+
+  // Usage tracking
+  assessmentsUsedThisMonth Int @default(0)
+  practiceAssessmentsUsed  Int @default(0)
+
+  // Additional credits (purchased separately)
+  additionalPracticeAssessmentCredits Int @default(0)
+
+  // Payment tracking - Payment Provider integration
+  paymentProvider               payment_provider @default(DUMMY)
+  paymentProviderCustomerId     String? // Payment Provider Customer ID
+  paymentProviderSubscriptionId String? // Payment Provider Subscription ID
+  lastBillingDate               DateTime?
+  nextBillingDate               DateTime?
+
+  // Metadata field for storing cancellation reasons and other dynamic data
+  metadata Json?
+
+  // Credit purchases history
+  creditPurchases candidate_subscription_credit_purchase[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("candidate_subscriptions")
+}
+
+// Model for tracking candidate credit purchases
+model candidate_subscription_credit_purchase {
+  id                      String                 @id @default(uuid())
+  candidateSubscription   candidate_subscription @relation(fields: [candidateSubscriptionId], references: [id], onDelete: Cascade)
+  candidateSubscriptionId String
+
+  creditType    candidate_credit_type
+  creditsAmount Int
+  costPerCredit Float
+  totalCost     Float
+  currency      String                @default("USD")
+
+  // Payment Provider specific fields
+  paymentProvider                payment_provider @default(DUMMY)
+  paymentProviderPaymentIntentId String?
+  paymentProviderInvoiceId       String?
+
+  // Status tracking
+  isPaid Boolean   @default(false)
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("candidate_subscription_credit_purchases")
+}

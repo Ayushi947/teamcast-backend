@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: teamcast
+  labels:
+    app: teamcast-backend
+    environment: production

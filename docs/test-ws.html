@@ -1,0 +1,589 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Teamcast Voice API Test Client</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      .container {
+        max-width: 800px;
+      }
+      .card {
+        margin-bottom: 20px;
+      }
+      .audio-player {
+        width: 100%;
+        margin-top: 10px;
+      }
+      .confidence-bar {
+        height: 20px;
+        background-color: #e9ecef;
+        border-radius: 4px;
+        margin-top: 5px;
+      }
+      .confidence-fill {
+        height: 100%;
+        background-color: #28a745;
+        border-radius: 4px;
+        transition: width 0.3s ease;
+      }
+      .error-message {
+        color: #dc3545;
+        margin-top: 10px;
+      }
+      .base-url-section {
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 4px;
+        margin-bottom: 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container py-5">
+      <h1 class="mb-4">Teamcast Voice API Test Client</h1>
+
+      <!-- Base URL Section -->
+      <div class="base-url-section">
+        <div class="row align-items-center">
+          <div class="col-md-8">
+            <label for="baseUrlInput" class="form-label">API Base URL</label>
+            <input
+              type="text"
+              id="baseUrlInput"
+              class="form-control"
+              placeholder="Enter API base URL (e.g., http://localhost:4300/api)"
+              value="http://localhost:4300/api"
+            />
+          </div>
+          <div class="col-md-4">
+            <button id="testConnectionBtn" class="btn btn-outline-primary mt-4">
+              Test Connection
+            </button>
+          </div>
+        </div>
+        <div id="connectionStatus" class="mt-2"></div>
+      </div>
+
+      <!-- Text to Speech Section -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="h5 mb-0">Text to Speech</h2>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="textInput" class="form-label">Text to Convert</label>
+            <textarea
+              id="textInput"
+              class="form-control"
+              rows="3"
+              placeholder="Enter text to convert to speech..."
+            ></textarea>
+          </div>
+          <div class="mb-3">
+            <label for="voiceSelect" class="form-label">Voice</label>
+            <select id="voiceSelect" class="form-select">
+              <!-- US English Voices -->
+              <optgroup label="English (US) - Chirp 3 HD">
+                <option value="en-US-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="en-US-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="en-US-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="en-US-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="en-US-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="en-US-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="en-US-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="en-US-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+                <option value="en-US-Chirp3-HD-Achird">Achird (Male)</option>
+                <option value="en-US-Chirp3-HD-Algenib">Algenib (Male)</option>
+                <option value="en-US-Chirp3-HD-Algieba">Algieba (Male)</option>
+                <option value="en-US-Chirp3-HD-Alnilam">Alnilam (Male)</option>
+                <option value="en-US-Chirp3-HD-Autonoe">
+                  Autonoe (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Callirrhoe">
+                  Callirrhoe (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Despina">
+                  Despina (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Enceladus">
+                  Enceladus (Male)
+                </option>
+                <option value="en-US-Chirp3-HD-Erinome">
+                  Erinome (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Gacrux">Gacrux (Female)</option>
+                <option value="en-US-Chirp3-HD-Iapetus">Iapetus (Male)</option>
+                <option value="en-US-Chirp3-HD-Laomedeia">
+                  Laomedeia (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Pulcherrima">
+                  Pulcherrima (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Rasalgethi">
+                  Rasalgethi (Male)
+                </option>
+                <option value="en-US-Chirp3-HD-Sadachbia">
+                  Sadachbia (Male)
+                </option>
+                <option value="en-US-Chirp3-HD-Sadaltager">
+                  Sadaltager (Male)
+                </option>
+                <option value="en-US-Chirp3-HD-Schedar">Schedar (Male)</option>
+                <option value="en-US-Chirp3-HD-Sulafat">
+                  Sulafat (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Umbriel">Umbriel (Male)</option>
+                <option value="en-US-Chirp3-HD-Vindemiatrix">
+                  Vindemiatrix (Female)
+                </option>
+                <option value="en-US-Chirp3-HD-Zubenelgenubi">
+                  Zubenelgenubi (Male)
+                </option>
+                <option value="en-US-Chirp3-HD-Achernar">
+                  Achernar (Female)
+                </option>
+              </optgroup>
+
+              <!-- UK English Voices -->
+              <optgroup label="English (UK) - Chirp 3 HD">
+                <option value="en-GB-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="en-GB-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="en-GB-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="en-GB-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="en-GB-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="en-GB-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="en-GB-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="en-GB-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Australian English Voices -->
+              <optgroup label="English (Australia) - Chirp 3 HD">
+                <option value="en-AU-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="en-AU-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="en-AU-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="en-AU-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="en-AU-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="en-AU-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="en-AU-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="en-AU-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Indian English Voices -->
+              <optgroup label="English (India) - Chirp 3 HD">
+                <option value="en-IN-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="en-IN-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="en-IN-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="en-IN-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="en-IN-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="en-IN-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="en-IN-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="en-IN-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Spanish Voices -->
+              <optgroup label="Spanish (US) - Chirp 3 HD">
+                <option value="es-US-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="es-US-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="es-US-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="es-US-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="es-US-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="es-US-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="es-US-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="es-US-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <optgroup label="Spanish (Spain) - Chirp 3 HD">
+                <option value="es-ES-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="es-ES-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="es-ES-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="es-ES-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="es-ES-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="es-ES-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="es-ES-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="es-ES-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- German Voices -->
+              <optgroup label="German (Germany) - Chirp 3 HD">
+                <option value="de-DE-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="de-DE-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="de-DE-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="de-DE-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="de-DE-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="de-DE-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="de-DE-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="de-DE-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- French Voices -->
+              <optgroup label="French (France) - Chirp 3 HD">
+                <option value="fr-FR-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="fr-FR-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="fr-FR-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="fr-FR-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="fr-FR-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="fr-FR-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="fr-FR-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="fr-FR-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <optgroup label="French (Canada) - Chirp 3 HD">
+                <option value="fr-CA-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="fr-CA-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="fr-CA-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="fr-CA-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="fr-CA-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="fr-CA-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="fr-CA-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="fr-CA-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Hindi Voices -->
+              <optgroup label="Hindi (India) - Chirp 3 HD">
+                <option value="hi-IN-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="hi-IN-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="hi-IN-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="hi-IN-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="hi-IN-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="hi-IN-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="hi-IN-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="hi-IN-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Portuguese Voices -->
+              <optgroup label="Portuguese (Brazil) - Chirp 3 HD">
+                <option value="pt-BR-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="pt-BR-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="pt-BR-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="pt-BR-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="pt-BR-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="pt-BR-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="pt-BR-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="pt-BR-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Arabic Voices -->
+              <optgroup label="Arabic (Generic) - Chirp 3 HD">
+                <option value="ar-XA-Chirp3-HD-Aoede">Aoede (Female)</option>
+                <option value="ar-XA-Chirp3-HD-Puck">Puck (Male)</option>
+                <option value="ar-XA-Chirp3-HD-Charon">Charon (Male)</option>
+                <option value="ar-XA-Chirp3-HD-Kore">Kore (Female)</option>
+                <option value="ar-XA-Chirp3-HD-Fenrir">Fenrir (Male)</option>
+                <option value="ar-XA-Chirp3-HD-Leda">Leda (Female)</option>
+                <option value="ar-XA-Chirp3-HD-Orus">Orus (Male)</option>
+                <option value="ar-XA-Chirp3-HD-Zephyr">Zephyr (Female)</option>
+              </optgroup>
+
+              <!-- Legacy Neural2 Voices (for backward compatibility) -->
+              <optgroup label="Legacy Neural2 Voices">
+                <option value="en-US-Neural2-F">
+                  Female (US English) - Neural2
+                </option>
+                <option value="en-US-Neural2-D">
+                  Male (US English) - Neural2
+                </option>
+                <option value="en-GB-Neural2-A">
+                  Female (British English) - Neural2
+                </option>
+                <option value="en-GB-Neural2-B">
+                  Male (British English) - Neural2
+                </option>
+              </optgroup>
+            </select>
+          </div>
+          <button id="synthesizeBtn" class="btn btn-primary">
+            Synthesize Speech
+          </button>
+          <div id="ttsError" class="error-message"></div>
+          <audio
+            id="ttsAudio"
+            class="audio-player"
+            controls
+            style="display: none"
+          ></audio>
+        </div>
+      </div>
+
+      <!-- Speech to Text Section -->
+      <div class="card">
+        <div class="card-header">
+          <h2 class="h5 mb-0">Speech to Text</h2>
+        </div>
+        <div class="card-body">
+          <div class="mb-3">
+            <label for="audioInput" class="form-label">Audio File</label>
+            <input
+              type="file"
+              id="audioInput"
+              class="form-control"
+              accept="audio/*"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="sttLanguageSelect" class="form-label">Language</label>
+            <select id="sttLanguageSelect" class="form-select">
+              <!-- English Variants -->
+              <optgroup label="English">
+                <option value="en-US">English (US)</option>
+                <option value="en-GB">English (UK)</option>
+                <option value="en-AU">English (Australia)</option>
+                <option value="en-IN">English (India)</option>
+              </optgroup>
+
+              <!-- Spanish Variants -->
+              <optgroup label="Spanish">
+                <option value="es-US">Spanish (US)</option>
+                <option value="es-ES">Spanish (Spain)</option>
+              </optgroup>
+
+              <!-- French Variants -->
+              <optgroup label="French">
+                <option value="fr-FR">French (France)</option>
+                <option value="fr-CA">French (Canada)</option>
+              </optgroup>
+
+              <!-- German -->
+              <optgroup label="German">
+                <option value="de-DE">German (Germany)</option>
+              </optgroup>
+
+              <!-- Other Languages -->
+              <optgroup label="Other Languages">
+                <option value="hi-IN">Hindi (India)</option>
+                <option value="pt-BR">Portuguese (Brazil)</option>
+                <option value="ar-XA">Arabic (Generic)</option>
+                <option value="id-ID">Indonesian (Indonesia)</option>
+                <option value="it-IT">Italian (Italy)</option>
+                <option value="ja-JP">Japanese (Japan)</option>
+                <option value="tr-TR">Turkish (Turkey)</option>
+                <option value="vi-VN">Vietnamese (Vietnam)</option>
+                <option value="bn-IN">Bengali (India)</option>
+                <option value="gu-IN">Gujarati (India)</option>
+                <option value="kn-IN">Kannada (India)</option>
+                <option value="ml-IN">Malayalam (India)</option>
+                <option value="mr-IN">Marathi (India)</option>
+                <option value="ta-IN">Tamil (India)</option>
+                <option value="te-IN">Telugu (India)</option>
+                <option value="nl-BE">Dutch (Belgium)</option>
+                <option value="nl-NL">Dutch (Netherlands)</option>
+                <option value="ko-KR">Korean (South Korea)</option>
+                <option value="cmn-CN">Mandarin Chinese (China)</option>
+                <option value="pl-PL">Polish (Poland)</option>
+                <option value="ru-RU">Russian (Russia)</option>
+                <option value="sw-KE">Swahili (Kenya)</option>
+                <option value="th-TH">Thai (Thailand)</option>
+                <option value="ur-IN">Urdu (India)</option>
+                <option value="uk-UA">Ukrainian (Ukraine)</option>
+              </optgroup>
+            </select>
+          </div>
+          <button id="transcribeBtn" class="btn btn-primary">
+            Transcribe Audio
+          </button>
+          <div id="sttError" class="error-message"></div>
+          <div id="transcriptionResult" class="mt-3" style="display: none">
+            <h3 class="h6">Transcription:</h3>
+            <p id="transcribedText" class="mb-2"></p>
+            <div class="confidence-bar">
+              <div
+                id="confidenceFill"
+                class="confidence-fill"
+                style="width: 0%"
+              ></div>
+            </div>
+            <small id="confidenceText" class="text-muted"></small>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Utility function to convert file to base64
+      async function fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.readAsDataURL(file);
+          reader.onload = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = (error) => reject(error);
+        });
+      }
+
+      // Get base URL with trailing slash removed
+      function getBaseUrl() {
+        const baseUrl = document.getElementById('baseUrlInput').value.trim();
+        return baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+      }
+
+      // Test connection to API
+      document
+        .getElementById('testConnectionBtn')
+        .addEventListener('click', async () => {
+          const connectionStatus = document.getElementById('connectionStatus');
+          const baseUrl = getBaseUrl();
+
+          try {
+            connectionStatus.innerHTML =
+              '<div class="text-info">Testing connection...</div>';
+            const response = await fetch(`${baseUrl}/voice/synthesize`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: 'Test connection',
+                voice: 'en-US-Chirp3-HD-Leda',
+                languageCode: 'en-US',
+              }),
+            });
+
+            if (response.ok) {
+              connectionStatus.innerHTML =
+                '<div class="text-success">✓ Connection successful</div>';
+            } else {
+              const error = await response.json();
+              throw new Error(error.error?.message || 'Connection failed');
+            }
+          } catch (error) {
+            connectionStatus.innerHTML = `<div class="text-danger">✗ ${error.message}</div>`;
+          }
+        });
+
+      // Text to Speech functionality
+      document
+        .getElementById('synthesizeBtn')
+        .addEventListener('click', async () => {
+          const textInput = document.getElementById('textInput');
+          const voiceSelect = document.getElementById('voiceSelect');
+          const ttsError = document.getElementById('ttsError');
+          const ttsAudio = document.getElementById('ttsAudio');
+          const baseUrl = getBaseUrl();
+
+          try {
+            ttsError.textContent = '';
+            // Extract language code from voice name (e.g., "en-US-Chirp3-HD-Leda" -> "en-US")
+            const voiceName = voiceSelect.value;
+            const languageCode = voiceName.split('-').slice(0, 2).join('-');
+
+            const response = await fetch(`${baseUrl}/voice/synthesize`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                text: textInput.value,
+                voice: voiceSelect.value,
+                languageCode: languageCode,
+              }),
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(
+                error.error?.message || 'Failed to synthesize speech'
+              );
+            }
+
+            // Get the response content type
+            const contentType = response.headers.get('content-type');
+            console.log('Response content type:', contentType);
+
+            if (contentType && contentType.includes('audio/')) {
+              // If it's a direct audio response, use it as is
+              const audioBlob = await response.blob();
+              ttsAudio.src = URL.createObjectURL(audioBlob);
+            } else {
+              // If it's JSON with base64 audio
+              const data = await response.json();
+              console.log('Response data:', data);
+
+              if (!data.data.audioContent) {
+                throw new Error('No audio content in response');
+              }
+
+              ttsAudio.src = `data:audio/mp3;base64,${data.data.audioContent}`;
+            }
+
+            ttsAudio.style.display = 'block';
+
+            // Add error handling for audio playback
+            ttsAudio.onerror = (e) => {
+              ttsError.textContent =
+                'Error playing audio: ' + e.target.error.message;
+              ttsAudio.style.display = 'none';
+            };
+
+            // Ensure audio is loaded before playing
+            ttsAudio.onloadeddata = () => {
+              ttsAudio.play().catch((error) => {
+                ttsError.textContent = 'Error playing audio: ' + error.message;
+                ttsAudio.style.display = 'none';
+              });
+            };
+          } catch (error) {
+            ttsError.textContent = error.message;
+            ttsAudio.style.display = 'none';
+          }
+        });
+
+      // Speech to Text functionality
+      document
+        .getElementById('transcribeBtn')
+        .addEventListener('click', async () => {
+          const audioInput = document.getElementById('audioInput');
+          const languageSelect = document.getElementById('sttLanguageSelect');
+          const sttError = document.getElementById('sttError');
+          const transcriptionResult = document.getElementById(
+            'transcriptionResult'
+          );
+          const transcribedText = document.getElementById('transcribedText');
+          const confidenceFill = document.getElementById('confidenceFill');
+          const confidenceText = document.getElementById('confidenceText');
+          const baseUrl = getBaseUrl();
+
+          try {
+            sttError.textContent = '';
+            if (!audioInput.files.length) {
+              throw new Error('Please select an audio file');
+            }
+
+            const audioFile = await fileToBase64(audioInput.files[0]);
+            const response = await fetch(`${baseUrl}/voice/transcribe`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                audioContent: audioFile,
+                languageCode: languageSelect.value,
+                audioEncoding: 'MP3',
+              }),
+            });
+
+            if (!response.ok) {
+              const error = await response.json();
+              throw new Error(
+                error.error?.message || 'Failed to transcribe audio'
+              );
+            }
+
+            const { text, confidence } = await response.json();
+            transcribedText.textContent = text;
+            confidenceFill.style.width = `${confidence * 100}%`;
+            confidenceText.textContent = `Confidence: ${(confidence * 100).toFixed(1)}%`;
+            transcriptionResult.style.display = 'block';
+          } catch (error) {
+            sttError.textContent = error.message;
+            transcriptionResult.style.display = 'none';
+          }
+        });
+    </script>
+  </body>
+</html>

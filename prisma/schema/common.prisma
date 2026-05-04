@@ -1,0 +1,79 @@
+// Communication channel enum to standardize string fields
+enum communication_channel {
+  EMAIL
+  PHONE
+  SMS
+  IN_APP
+}
+
+// Difficulty level enum to standardize string fields
+enum difficulty_level {
+  EASY
+  MEDIUM
+  HARD
+  EXPERT
+}
+
+// Date format enum to standardize string fields
+enum date_format {
+  MM_DD_YYYY
+  DD_MM_YYYY
+  YYYY_MM_DD
+}
+
+// Time format enum to standardize string fields
+enum time_format {
+  TWELVE_HOUR
+  TWENTY_FOUR_HOUR
+}
+
+// Work type enum to standardize string fields
+enum work_type {
+  EMPLOYEE
+  CONTRACTOR
+  FREELANCER
+  VOLUNTEER
+  INTERN
+  APPRENTICESHIP
+  OTHER
+}
+
+// Work commitment enum to standardize string fields
+enum work_commitment {
+  FULL_TIME
+  PART_TIME
+  HOURLY
+  PROJECT_BASED
+}
+
+// Work schedule enum to standardize string fields
+enum work_schedule {
+  REGULAR
+  FLEXIBLE
+  SHIFT_BASED
+}
+
+// Sex enum to standardize string fields
+enum sex {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+// Marital status enum to standardize string fields
+enum marital_status {
+  SINGLE
+  MARRIED
+  DIVORCED
+  WIDOWED
+  PREFER_NOT_TO_SAY
+}
+
+// Question type enum to standardize string fields
+enum question_type {
+  MULTIPLE_CHOICE
+  TEXT
+  CODE
+  BOOLEAN
+}

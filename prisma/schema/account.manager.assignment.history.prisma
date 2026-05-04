@@ -1,0 +1,79 @@
+// Account Manager Assignment History
+model account_manager_assignment_history {
+  id                       String   @id @default(uuid())
+  clientId                 String
+  previousAccountManagerId String
+  newAccountManagerId      String?
+  changeReason             String
+  changedBy                String // User ID who made the change
+  changedAt                DateTime @default(now())
+  notes                    String?
+
+  // Relations
+  client                 client        @relation(fields: [clientId], references: [id])
+  previousAccountManager support_user  @relation("PreviousAccountManager", fields: [previousAccountManagerId], references: [id])
+  newAccountManager      support_user? @relation("NewAccountManager", fields: [newAccountManagerId], references: [id])
+  changedByUser          user          @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@index([clientId])
+  @@index([previousAccountManagerId])
+  @@index([newAccountManagerId])
+  @@index([changedBy])
+  @@map("account_manager_assignment_history")
+}
+
+// Job Posting Assignment History
+model job_posting_assignment_history {
+  id                       String   @id @default(uuid())
+  jobPostingId             String
+  previousRecruiterId      String
+  newRecruiterId           String?
+  previousAccountManagerId String
+  newAccountManagerId      String?
+  changedBy                String
+  changedAt                DateTime @default(now())
+  notes                    String?
+
+  // Relations
+  jobPosting             job_posting   @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  previousRecruiter      support_user  @relation("PreviousRecruiter", fields: [previousRecruiterId], references: [id])
+  newRecruiter           support_user? @relation("NewRecruiter", fields: [newRecruiterId], references: [id])
+  previousAccountManager support_user  @relation("PreviousAM", fields: [previousAccountManagerId], references: [id])
+  newAccountManager      support_user? @relation("NewAM", fields: [newAccountManagerId], references: [id])
+  changedByUser          user          @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@index([jobPostingId])
+  @@index([previousRecruiterId])
+  @@index([newRecruiterId])
+  @@index([previousAccountManagerId])
+  @@index([newAccountManagerId])
+  @@index([changedBy])
+  @@map("job_posting_assignment_history")
+}
+
+// Recommendation Archive
+model job_posting_recommendation_archive {
+  id                       String   @id @default(uuid())
+  originalRecommendationId String
+  jobPostingId             String
+  candidateId              String
+  recruiterId              String
+  accountManagerId         String
+  archivedAt               DateTime @default(now())
+  originalScore            Float
+  originalMatchReason      String[]
+  originalStatus           String
+
+  // Relations
+  jobPosting     job_posting  @relation(fields: [jobPostingId], references: [id], onDelete: Cascade)
+  candidate      candidate    @relation(fields: [candidateId], references: [id])
+  recruiter      support_user @relation("ArchiveRecruiter", fields: [recruiterId], references: [id])
+  accountManager support_user @relation("ArchiveAccountManager", fields: [accountManagerId], references: [id])
+
+  @@index([jobPostingId])
+  @@index([candidateId])
+  @@index([recruiterId])
+  @@index([accountManagerId])
+  @@index([originalRecommendationId])
+  @@map("job_posting_recommendation_archives")
+}

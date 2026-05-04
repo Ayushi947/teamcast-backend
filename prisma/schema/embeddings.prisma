@@ -1,0 +1,19 @@
+model candidate_embeddings {
+  candidateId String                     @id
+  embedding   Unsupported("vector(768)")
+  data        Json
+  createdAt   DateTime                   @default(now()) @map("created_at")
+  updatedAt   DateTime                   @updatedAt @map("updated_at")
+
+  @@map("candidate_embeddings")
+}
+
+model job_embeddings {
+  jobId     String                     @id
+  embedding Unsupported("vector(768)")
+  data      Json
+  createdAt DateTime                   @default(now()) @map("created_at")
+  updatedAt DateTime                   @updatedAt @map("updated_at")
+
+  @@map("job_embeddings")
+}

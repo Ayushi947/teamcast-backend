@@ -1,0 +1,185 @@
+// Subscription status
+enum client_subscription_status {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PENDING
+  TRIALING
+}
+
+// Base subscription package model - defines the available packages and their limits
+model client_subscription_package {
+  id          String @id @default(uuid())
+  name        String // Custom name (e.g. "Startup Pro", "Enterprise Plus", etc.)
+  description String
+
+  // Only one package can be the default
+  isDefault Boolean @default(false)
+
+  price        Float
+  currency     String  @default("USD")
+  billingCycle String  @default("MONTHLY") // MONTHLY, QUARTERLY, ANNUALLY
+  isActive     Boolean @default(true)
+
+  // Package limits
+  maxJobPostings          Int // Maximum number of active job postings
+  maxCandidateViews       Int // Maximum number of candidate profile views (sourcing)
+  maxAiAssessments        Int // Maximum number of AI assessments
+  maxSeats                Int // Maximum number of user seats allowed
+  unlimitedCandidateViews Boolean @default(false) // For unlimited sourcing
+
+  // Payment Provider specific fields
+  paymentProvider          payment_provider @default(DUMMY)
+  paymentProviderPriceId   String? // Payment Provider Price ID for this package
+  paymentProviderProductId String? // Payment Provider Product ID for this package
+
+  // Additional features could be stored as JSON
+  additionalFeatures Json?
+
+  trialPeriod Int @default(14) // in days
+
+  // Relationships
+  clientSubscriptions client_subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("subscription_packages")
+}
+
+// Client subscription model - tracks client subscriptions
+model client_subscription {
+  id        String                      @id @default(uuid())
+  client    client                      @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  clientId  String
+  package   client_subscription_package @relation(fields: [packageId], references: [id])
+  packageId String
+
+  status    client_subscription_status @default(ACTIVE)
+  startDate DateTime                   @default(now())
+  endDate   DateTime?
+  autoRenew Boolean                    @default(true)
+
+  // Usage tracking
+  usedJobPostings    Int @default(0)
+  usedCandidateViews Int @default(0)
+  usedAiAssessments  Int @default(0)
+  usedSeats          Int @default(1)
+
+  //max credits
+  maxCandidateViewCredits Int @default(0)
+  maxAiAssessmentCredits  Int @default(0)
+  maxSeatsCredits         Int @default(0)
+  maxJobPostingsCredits   Int @default(0)
+
+  // Additional credits (purchased separately)
+  additionalCandidateViewCredits Int @default(0)
+  additionalAiAssessmentCredits  Int @default(0)
+  additionalSeatsCredits         Int @default(0)
+  additionalJobPostingsCredits   Int @default(0)
+
+  // Payment tracking - Payment Provider integration
+  paymentProvider               payment_provider @default(DUMMY)
+  paymentProviderCustomerId     String? // Payment Provider Customer ID
+  paymentProviderSubscriptionId String? // Payment Provider Subscription ID
+  lastBillingDate               DateTime?
+  nextBillingDate               DateTime?
+
+  // trial period
+  isTrial       Boolean   @default(false)
+  trialExpireAt DateTime?
+
+  // Metadata field for storing cancellation reasons and other dynamic data
+  metadata Json?
+
+  // Credit purchases history
+  creditPurchases client_subscription_credit_purchase[]
+
+  // Payment history
+  payments payment[]
+
+  // Subscription history
+  history client_subscription_history[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_subscriptions")
+}
+
+// Client subscription history model - tracks subscription changes and history
+model client_subscription_history {
+  id String @id @default(uuid())
+
+  // Reference to client subscription
+  subscriptionId String
+  subscription   client_subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  status client_subscription_status
+
+  startDate DateTime
+  endDate   DateTime?
+
+  // Usage snapshot
+  usedJobPostings    Int
+  usedCandidateViews Int
+  usedAiAssessments  Int
+  usedSeats          Int
+
+  // Credits snapshot
+  maxCandidateViewCredits Int
+  maxAiAssessmentCredits  Int
+  maxSeatsCredits         Int
+  maxJobPostingsCredits   Int
+
+  additionalCandidateViewCredits Int
+  additionalAiAssessmentCredits  Int
+  additionalSeatsCredits         Int
+  additionalJobPostingsCredits   Int
+
+  // Trial info
+  isTrial       Boolean
+  trialExpireAt DateTime?
+
+  // Metadata for cancellation reason, upgrade/downgrade reason
+  metadata Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_subscription_history")
+}
+
+// Credit types
+enum client_credit_type {
+  CANDIDATE_VIEW
+  AI_ASSESSMENT
+  SEAT
+}
+
+// Model for tracking credit purchases (addons)
+model client_subscription_credit_purchase {
+  id                   String              @id @default(uuid())
+  clientSubscription   client_subscription @relation(fields: [clientSubscriptionId], references: [id], onDelete: Cascade)
+  clientSubscriptionId String
+
+  creditType    client_credit_type
+  creditsAmount Int
+  costPerCredit Float
+  totalCost     Float
+  currency      String             @default("USD")
+
+  // Payment Provider specific fields
+  paymentProvider                payment_provider @default(DUMMY)
+  paymentProviderPaymentIntentId String?
+  paymentProviderInvoiceId       String?
+
+  // Status tracking
+  isPaid Boolean   @default(false)
+  paidAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("client_subscription_credit_purchases")
+}

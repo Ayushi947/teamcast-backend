@@ -1,0 +1,21 @@
+enum resume_assessment_task_status {
+  PENDING
+  PROCESSING
+  UPDATING_CANDIDATE_RESUME_ASSESSMENT
+  COMPLETED
+  FAILED
+}
+
+model resume_assessment_task {
+  id           String                        @id @default(uuid())
+  resume       resume                        @relation(fields: [resumeId], references: [id], onDelete: Cascade)
+  resumeId     String                        @unique
+  status       resume_assessment_task_status @default(PENDING)
+  error        String?
+  assessment   resume_assessment?            @relation(fields: [assessmentId], references: [id])
+  assessmentId String?                       @unique
+  createdAt    DateTime                      @default(now())
+  updatedAt    DateTime                      @updatedAt
+
+  @@map("resume_assessment_tasks")
+}
