@@ -1,0 +1,45 @@
+name: Build and Push Docker Image to QA Registry
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-and-push-qa:
+    runs-on: self-hosted
+
+    env:
+      PROJECT_ID: teamcastai
+      REGISTRY: us-central1-docker.pkg.dev/teamcastai
+      REPOSITORY: teamcast
+      IMAGE_NAME: backend-qa
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get short commit SHA
+        id: image_tag
+        run: echo "tag=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Google Auth
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Login to Docker
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev
+
+      - name: Build and Push Docker Image (QA)
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.REPOSITORY }}/${{ env.IMAGE_NAME }}:${{ steps.image_tag.outputs.tag }}
+          no-cache: true
