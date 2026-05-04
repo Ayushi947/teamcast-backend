@@ -1,0 +1,27 @@
+name: Deploy to Teamcast QA Backend
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TEAMCAST_QA }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_QA_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to GCP VM
+        run: |
+          ssh ${{ secrets.GCP_QA_USER }}@${{ secrets.GCP_QA_HOST }} << 'EOF'
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v20.19.3/bin
+            cd /home/ubuntu/teamcast/teamcast-backend
+            git pull origin main
+            pnpm install
+            pnpm run build
+            pm2 reload teamcast-backend || pm2 start pnpm --name teamcast-backend -- start
+          EOF
