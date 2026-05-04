@@ -1,0 +1,79 @@
+name: Deploy to Teamcast Dev Backend
+
+on:
+  workflow_run:
+    workflows: ['Lint Check']
+    types:
+      - completed
+    branches:
+      - dev
+
+jobs:
+  deploy-backend:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TEAMCAST_DEV }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_DEV_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to GCP VM (Backend)
+        run: |
+          ssh ${{ secrets.GCP_DEV_USER }}@${{ secrets.GCP_DEV_HOST }} << 'EOF'
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v20.19.3/bin
+            cd /home/ubuntu/teamcast/teamcast-backend
+            git pull origin main
+            npm install
+            npm run build
+            pm2 reload teamcast-backend || pm2 start pnpm --name teamcast-backend -- start
+          EOF
+
+  deploy-cron:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TEAMCAST_DEV }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_DEV_CRON_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to GCP VM (Cron)
+        run: |
+          ssh ${{ secrets.GCP_DEV_USER }}@${{ secrets.GCP_DEV_CRON_HOST }} << 'EOF'
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v20.19.3/bin
+            cd /home/ubuntu/teamcast/teamcast-backend
+            git pull origin main
+            npm install
+            npm run build
+            pm2 reload teamcast-backend || pm2 start pnpm --name teamcast-backend -- start
+          EOF
+
+  deploy-worker:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: self-hosted
+
+    steps:
+      - name: Setup SSH
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.TEAMCAST_DEV }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H ${{ secrets.GCP_DEV_WORKER_HOST }} >> ~/.ssh/known_hosts
+
+      - name: Deploy to GCP VM (Worker)
+        run: |
+          ssh ${{ secrets.GCP_DEV_USER }}@${{ secrets.GCP_DEV_WORKER_HOST }} << 'EOF'
+            export PATH=$PATH:/home/ubuntu/.nvm/versions/node/v20.19.3/bin
+            cd /home/ubuntu/teamcast/teamcast-backend
+            git pull origin main
+            npm install
+            npm run build
+            pm2 reload teamcast-backend || pm2 start pnpm --name teamcast-backend -- start
+          EOF
